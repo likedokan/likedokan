@@ -1,0 +1,1454 @@
+<!DOCTYPE html>
+<html class="scroll-smooth" lang="bn">
+ <head>
+  <meta charset="utf-8"/>
+  <meta content="width=device-width, initial-scale=1" name="viewport"/>
+  <title>
+   টাস্ক সাবমিশন ম্যানেজমেন্ট
+  </title>
+  <script src="https://cdn.tailwindcss.com">
+  </script>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css" rel="stylesheet"/>
+  <link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri&amp;display=swap" rel="stylesheet"/>
+  <style>
+   /* Global styles for the body and font */
+    body {
+        font-family: 'Hind Siliguri', sans-serif;
+        background: #e0f7fa; /* Waterdrop light blue background */
+        overflow-x: hidden; /* Ensures no horizontal scrollbar due to sidebar */
+    }
+
+    /* Scrollbar for modal image zoom */
+    .modal-scroll::-webkit-scrollbar {
+      width: 8px;
+      height: 8px;
+    }
+    .modal-scroll::-webkit-scrollbar-thumb {
+      background-color: #0288d1;
+      border-radius: 4px;
+    }
+
+    /* Simple spinner for loading */
+    .spinner {
+      border: 2px solid #f3f3f3;
+      border-top: 2px solid #3498db;
+      border-radius: 50%;
+      width: 12px;
+      height: 12px;
+      animation: spin 1s linear infinite;
+    }
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    /* Styles for profile picture */
+    #header-profile-logo {
+        width: 48px; /* Matches logo size */
+        height: 48px; /* Matches logo size */
+        border-radius: 50%; /* Circular */
+        border: 2px solid #007bff; /* Example border */
+        object-fit: cover;
+    }
+
+    /* Styles for mobile slide-out menu */
+    #mobileSliderMenu {
+        position: fixed;
+        top: 0;
+        right: -280px; /* Hidden state */
+        width: 280px; /* Sidebar width */
+        height: 100%;
+        background-color: #ffffff; /* White background */
+        box-shadow: -8px 0 15px rgba(0, 0, 0, 0.15), inset 4px 0 8px rgba(255, 255, 255, 0.6);
+        z-index: 1000; /* Ensures it's on top of everything */
+        transition: right 0.35s cubic-bezier(0.4, 0, 0.2, 1); /* Smooth slide animation */
+        padding-top: 5rem; /* According to header height */
+        display: flex;
+        flex-direction: column;
+        border-top-left-radius: 1rem;
+        border-bottom-left-radius: 1rem;
+        backdrop-filter: saturate(180%) blur(12px);
+        -webkit-backdrop-filter: saturate(180%) blur(12px);
+    }
+
+    #mobileSliderMenu.active { /* Changed from .open to .active for consistency with dashboard.html */
+        right: 0; /* Visible state */
+        box-shadow: -12px 0 25px rgba(0, 0, 0, 0.25), inset 4px 0 12px rgba(255, 255, 255, 0.7);
+    }
+
+    #sliderMenuContent {
+        flex-grow: 1; /* Allows menu items to fill empty space */
+        padding: 1.5rem 0;
+        display: flex;
+        flex-direction: column;
+        gap: 0.75rem;
+    }
+
+    #sliderMenuContent .menu-item {
+        display: flex;
+        align-items: center;
+        padding: 0.75rem 1.75rem;
+        color: #4338ca; /* indigo-700 */
+        font-weight: 600; /* font-semibold */
+        font-size: 1.125rem; /* text-lg */
+        border-radius: 0.75rem;
+        transition: background-color 0.3s ease, color 0.3s ease, transform 0.2s ease;
+        text-decoration: none; /* Removes underline */
+        box-shadow: 0 0 0 0 transparent;
+        user-select: none;
+        position: relative;
+        overflow: hidden;
+    }
+
+    #sliderMenuContent .menu-item::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 0;
+      height: 100%;
+      width: 4px;
+      background: #4338ca;
+      border-top-right-radius: 0.75rem;
+      border-bottom-right-radius: 0.75rem;
+      transform: scaleY(0);
+      transform-origin: center;
+      transition: transform 0.3s ease;
+      z-index: 1;
+    }
+
+    #sliderMenuContent .menu-item:hover::before,
+    #sliderMenuContent .menu-item:focus-visible::before {
+      transform: scaleY(1);
+    }
+
+    #sliderMenuContent .menu-item:hover {
+        background-color: #4338ca; /* indigo-700 */
+        color: #e0e7ff; /* indigo-100 */
+        transform: translateX(6px);
+        box-shadow: 0 8px 15px rgba(67, 56, 202, 0.3);
+        z-index: 10;
+        outline: none;
+    }
+
+    #sliderMenuContent .menu-item:focus-visible {
+        outline: 2px solid #4338ca;
+        outline-offset: 2px;
+    }
+
+    /* Overlay backdrop */
+    #sliderBackdrop {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.45); /* Dark backdrop */
+        z-index: 999; /* Stays below the slider */
+        opacity: 0;
+        visibility: hidden;
+        transition: opacity 0.35s cubic-bezier(0.4, 0, 0.2, 1), visibility 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+        backdrop-filter: blur(2px);
+        -webkit-backdrop-filter: blur(2px);
+    }
+
+    #sliderBackdrop.active {
+        opacity: 1;
+        visibility: visible;
+    }
+
+    /* New styles for notification dropdown - caret */
+    #notificationDropdown::before {
+        content: '';
+        position: absolute;
+        top: -10px; /* Upwards from dropdown */
+        right: 18px; /* Aligned with notification button */
+        border-width: 0 10px 10px 10px; /* Creates a triangle */
+        border-color: transparent transparent white transparent; /* White triangle */
+        filter: drop-shadow(0 -2px 1px rgba(0,0,0,0.05)); /* Light shadow */
+        z-index: 51; /* Will be above dropdown */
+    }
+
+    #notificationDropdown::after {
+        content: '';
+        position: absolute;
+        top: -11px; /* 1px above for border */
+        right: 343px; /* Aligned with notification button */
+        border-width: 0 10px 10px 10px;
+        border-color: transparent transparent #e2e8f0 transparent; /* Border color */
+        z-index: 50; /* Above dropdown but below white triangle */
+    }
+
+    /* Adjust notification dropdown position for mobile screens (if needed) */
+    @media (max-width: 639px) { /* Below sm breakpoint */
+        #notificationDropdown::before,
+        #notificationDropdown::after {
+            right: 25px; /* Adjust position for small screens */
+        }
+    }
+
+    /* Additional styles for spinner */
+    .spinner {
+        border: 2px solid rgba(0, 0, 0, 0.1);
+        border-left-color: #4f46e5; /* indigo-600 */
+        border-radius: 50%;
+        width: 16px;
+        height: 16px;
+        animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+        0% {
+            transform: rotate(0deg);
+        }
+        100% {
+            transform: rotate(360deg);
+        }
+    }
+
+    /* New styles for login/logout buttons */
+    .btn-login {
+        background-color: #22c55e; /* green-500 */
+        color: white;
+    }
+
+    .btn-login:hover {
+        background-color: #16a34a; /* green-600 */
+    }
+
+    .btn-login:focus {
+        outline: none;
+        box-shadow: 0 0 0 2px #4ade80, 0 0 0 4px rgba(34, 197, 94, 0.5); /* green-300 ring */
+    }
+
+    .btn-logout {
+        background-color: #ef4444; /* red-500 */
+        color: white;
+    }
+
+    .btn-logout:hover {
+        background-color: #dc2626; /* red-600 */
+    }
+
+    .btn-logout:focus {
+        outline: none;
+        box-shadow: 0 0 0 2px #f87171, 0 0 0 4px rgba(239, 68, 68, 0.5); /* red-300 ring */
+    }
+  </style>
+ </head>
+ <body class="bg-gradient-to-b from-cyan-100 to-blue-200 min-h-screen">
+  <!-- Header Template -->
+  <template id="header-template">
+    <header class="bg-white shadow-xl sticky top-0 z-50 border-b border-gray-200">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 flex items-center justify-between">
+        <div class="flex items-center space-x-3 sm:space-x-4">
+          <img alt="প্রোফাইল ছবি"
+               class="w-10 h-10 sm:w-12 sm:h-12 rounded-full border-2 border-indigo-500 shadow-md"
+               loading="lazy"
+               src="https://i.pravatar.cc/300?img=1"
+               id="header-profile-logo"/>
+          <div class="hidden sm:block">
+            <p id="welcomeMessage" class="text-gray-700 font-semibold text-base sm:text-lg leading-tight select-none">আপনার নাম</p>
+            <p class="text-gray-500 text-xs sm:text-sm select-none">আপনার প্রোফাইল</p>
+          </div>
+          <h1 class="text-2 sm:text-3xl font-extrabold text-indigo-600 tracking-wide select-none ml-4 sm:ml-6">
+            <span>Order</span>
+          </h1>
+        </div>
+
+        <div class="flex items-center space-x-3 sm:space-x-4">
+          <div class="flex items-center space-x-3">
+            <div id="userPointsCard" aria-label="আপনার পয়েন্ট"
+                 class="flex items-center bg-indigo-50 text-indigo-700 font-semibold px-2 py-1 rounded-full shadow select-none text-xs scale-90 hidden">
+              <i class="fas fa-coins mr-1 text-yellow-400 text-sm"></i>
+              <span id="userPointsDisplay">0 Points</span>
+            </div>
+
+            <div id="signInStatusCard" aria-label="সাইন-ইন স্ট্যাটাস"
+                 class="flex items-center bg-red-50 text-red-700 font-semibold px-2 py-1 rounded-full shadow select-none text-xs scale-90 hidden cursor-pointer">
+              <i class="fas fa-user-circle mr-1 text-red-500 text-sm"></i>
+              <span id="signInStatusDisplay">লগইন করুন</span>
+            </div>
+
+            <div id="loadingStatusCard" class="flex items-center bg-gray-100 text-gray-600 font-semibold px-2 py-1 rounded-full shadow select-none text-xs scale-90">
+              <div class="spinner mr-2"></div>
+              <span>লোড হচ্ছে...</span>
+            </div>
+          </div>
+
+          <button id="notificationButton" aria-label="নোটিফিকেশন"
+                  class="relative text-indigo-600 hover:text-indigo-800 transition focus:outline-none">
+            <i class="fas fa-bell text-lg sm:text-xl"></i>
+            <span class="absolute -top-1 -right-1 sm:-top-2 sm:-right-2 bg-red-600 text-white text-xs rounded-full px-1 sm:px-1.5 shadow-lg" id="notificationCountDisplay">0</span>
+          </button>
+
+          <div id="notificationDropdown" class="absolute top-16 right-4 sm:right-6 md:right-10 bg-white border border-gray-200 rounded-lg shadow-lg w-64 md:w-80 z-50 hidden">
+            <div class="px-4 py-3 border-b border-gray-200 flex justify-between items-center">
+              <h3 class="font-semibold text-gray-800">নোটিফিকেশনস</h3>
+              <span class="text-xs text-gray-500" id="newNotificationCount">০টি নতুন</span>
+            </div>
+            <div class="py-2 max-h-60 overflow-y-auto" id="notificationList">
+            </div>
+            <div class="px-4 py-3 border-t border-gray-200 text-center">
+              <a href="#" class="text-sm text-blue-600 hover:text-blue-800 font-medium">সকল নোটিফিকেশন দেখুন</a>
+            </div>
+          </div>
+          <button id="mobileMenuBtn" aria-label="মেনু"
+                  aria-controls="mobileSliderMenu"
+                  aria-expanded="false"
+                  class="md:hidden text-indigo-600 hover:text-indigo-800 text-xl sm:text-2xl focus:outline-none">
+            <i class="fas fa-bars"></i>
+          </button>
+
+          <nav aria-label="প্রধান নেভিগেশন"
+               class="hidden md:flex items-center space-x-6 lg:space-x-8 text-indigo-600 font-semibold select-none text-base"
+               role="navigation">
+            <a class="hover:text-indigo-800 transition" href="dashboard.html">ড্যাশবোর্ড</a>
+            <a class="hover:text-indigo-800 transition" href="mytasklist.html">টাস্ক</a>
+            <a class="hover:text-indigo-800 transition" href="leaderboard.html">লিডারবোর্ড</a>
+            <a class="hover:text-indigo-800 transition" href="order.html">অর্ডার</a>
+          </nav>
+        </div>
+      </div>
+
+      <div id="mobileSliderMenu" role="menu" aria-label="মোবাইল স্লাইডার মেনু">
+        <div class="flex items-center space-x-3 p-4 border-b border-gray-200 mb-4">
+          <img alt="স্লাইডার প্রোফাইল ছবি"
+               class="w-16 h-16 rounded-full border-2 border-indigo-500 shadow-md"
+               loading="lazy"
+               src="https://i.pravatar.cc/300?img=1"
+               id="slider-profile-pic"/>
+          <div>
+            <p id="sliderUserName" class="text-gray-700 font-semibold text-lg leading-tight">আপনার নাম</p>
+            <p class="text-gray-500 text-sm">আপনার প্রোফাইল</p>
+          </div>
+        </div>
+        <div id="sliderMenuContent" role="none">
+          <a class="menu-item" href="dashboard.html" role="menuitem" tabindex="0">ড্যাশবোর্ড</a>
+          <a class="menu-item" href="mytasklist.html" role="menuitem" tabindex="0">আমার টাস্ক</a>
+          <a class="menu-item" href="completedtask.html" role="menuitem" tabindex="0">সম্পূর্ণ করা টাস্ক</a>
+          <a class="menu-item" href="order.html" role="menuitem" tabindex="0">অর্ডার করুন</a>
+          <a class="menu-item" href="reffer.html" role="menuitem" tabindex="0">রেফার করুন</a>
+          <a class="menu-item" href="leaderboard.html" role="menuitem" tabindex="0">লিডারবোর্ড</a>
+        </div>
+        <div class="p-4 mt-auto border-t border-gray-200">
+          <button id="loginLogoutButton" class="w-full py-2 px-4 rounded-md font-semibold transition-colors duration-200
+                                        focus:outline-none focus:ring-2 focus:ring-offset-2">
+            লগইন করুন
+          </button>
+        </div>
+      </div>
+      <div id="sliderBackdrop" class="hidden" tabindex="-1" aria-hidden="true"></div>
+    </header>
+  </template>
+  <!-- Header section - from template, will be prepended by JS -->
+
+  <section class="bg-white shadow-md py-4 px-4 sm:px-6 lg:px-8 sticky top-[80px] z-40">
+   <div class="max-w-7xl mx-auto flex flex-col md:flex-row md:items-center md:space-x-6 space-y-3 md:space-y-0">
+    <div class="flex-1">
+     <input aria-label="Search submissions by name or ID" class="w-full md:max-w-md rounded-md border border-gray-300 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-cyan-400 focus:border-transparent" id="search-input" placeholder="নাম বা আইডি দিয়ে সার্চ করুন..." type="search"/>
+    </div>
+    <div class="flex flex-wrap gap-3">
+     <button class="bg-cyan-500 hover:bg-cyan-600 text-white font-semibold rounded-md px-4 py-2 shadow-md transition flex items-center space-x-2" id="approve-selected">
+      <i class="fas fa-check-circle">
+      </i>
+      <span>
+       Approve Selected
+      </span>
+     </button>
+     <button class="bg-red-500 hover:bg-red-600 text-white font-semibold rounded-md px-4 py-2 shadow-md transition flex items-center space-x-2" id="reject-selected">
+      <i class="fas fa-times-circle">
+      </i>
+      <span>
+       Reject Selected
+      </span>
+     </button>
+    </div>
+   </div>
+  </section>
+  <main class="flex-1 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+   <div class="mb-6 flex space-x-4 border-b border-gray-300">
+    <button aria-selected="true" class="pb-2 border-b-4 border-cyan-500 font-semibold text-cyan-700" id="tab-pending" role="tab" tabindex="0">
+     Pending Submissions
+    </button>
+    <button aria-selected="false" class="pb-2 border-b-4 border-transparent font-semibold text-gray-600 hover:text-cyan-700" id="tab-approved" role="tab" tabindex="-1">
+     Approved Submissions
+    </button>
+    <button aria-selected="false" class="pb-2 border-b-4 border-transparent font-semibold text-gray-600 hover:text-cyan-700" id="tab-rejected" role="tab" tabindex="-1">
+     Rejected Submissions
+    </button>
+   </div>
+   <section aria-busy="false" aria-live="polite" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6" id="submission-gallery">
+    </section>
+   <div class="mt-8 flex justify-center">
+    <button class="bg-cyan-500 hover:bg-cyan-600 text-white font-semibold rounded-md px-6 py-3 shadow-md transition flex items-center space-x-2" id="load-more-button">
+     <i class="fas fa-arrow-down">
+     </i>
+     <span>
+      Load More
+     </span>
+    </button>
+   </div>
+  </main>
+  <div aria-labelledby="modal-title" aria-modal="true" class="fixed inset-0 bg-black bg-opacity-80 flex flex-col items-center justify-center p-4 z-50 hidden" id="image-modal" role="dialog">
+   <div class="relative max-w-4xl w-full bg-white rounded-lg shadow-lg flex flex-col max-h-[90vh]">
+    <button aria-label="মডাল বন্ধ করুন" class="absolute top-3 right-3 text-gray-600 hover:text-gray-800 text-3xl z-50 focus:outline-none focus:ring-2 focus:ring-cyan-400 rounded-full bg-white p-1" id="modal-close">
+     <i class="fas fa-times-circle">
+     </i>
+    </button>
+    <main class="flex flex-col md:flex-row overflow-hidden flex-grow">
+     <div class="relative flex-1 bg-gray-100 flex items-center justify-center p-4 overflow-y-auto">
+      <img alt="সাবমিশনের স্ক্রিনশট বড় ভিউ" class="max-h-full max-w-full object-contain select-none" draggable="false" height="400" id="modal-image" src="https://storage.googleapis.com/a1aa/image/c60f986c-b65b-4ec2-5e0d-c25a1f1d7e0d.jpg" width="600"/>
+      <div class="absolute top-2 right-2 flex space-x-2">
+       <button aria-label="Zoom in" class="bg-white p-2 rounded shadow hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-cyan-400" id="zoom-in">
+        <i class="fas fa-search-plus text-cyan-600">
+        </i>
+       </button>
+       <button aria-label="Zoom out" class="bg-white p-2 rounded shadow hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-cyan-400" id="zoom-out">
+        <i class="fas fa-search-minus text-cyan-600">
+        </i>
+       </button>
+       <a aria-label="Download image" class="bg-white p-2 rounded shadow hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-cyan-400" download="" href="#" id="download-image">
+        <i class="fas fa-download text-cyan-600">
+        </i>
+       </a>
+      </div>
+      <button aria-label="Previous image" class="absolute left-2 top-1/2 -translate-y-1/2 bg-white p-2 rounded-full shadow hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-cyan-400" id="prev-image">
+       <i class="fas fa-chevron-left text-cyan-600">
+       </i>
+      </button>
+      <button aria-label="Next image" class="absolute right-2 top-1/2 -translate-y-1/2 bg-white p-2 rounded-full shadow hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-cyan-400" id="next-image">
+       <i class="fas fa-chevron-right text-cyan-600">
+       </i>
+      </button>
+     </div>
+     <section class="flex-1 p-4 overflow-y-auto flex flex-col justify-between">
+      <div class="space-y-3">
+       <p>
+        <span class="font-semibold">
+         নাম:
+        </span>
+        <span id="modal-user-name">
+         -
+        </span>
+       </p>
+       <p>
+        <span class="font-semibold">
+         ইউজার আইডি:
+        </span>
+        <span id="modal-user-id">
+         -
+        </span>
+       </p>
+       <p>
+        <span class="font-semibold">
+         সাবমিশন তারিখ:
+        </span>
+        <span id="modal-submission-date">
+         -
+        </span>
+       </p>
+       <p>
+        <span class="font-semibold">
+         স্ট্যাটাস:
+        </span>
+        <span class="inline-block px-2 py-1 rounded text-white font-semibold" id="modal-status">
+        </span>
+       </p>
+       <div class="hidden" id="reject-reason-container">
+        <label class="block font-semibold mb-1" for="reject-reason">
+         Reject করার কারণ লিখুন:
+        </label>
+        <textarea class="w-full border border-gray-300 rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-cyan-400" id="reject-reason" placeholder="কারণ লিখুন..." rows="3"></textarea>
+       </div>
+       </div>
+       <div class="flex space-x-4 mt-auto pt-4 border-t border-gray-200">
+        <button class="flex-1 bg-green-600 hover:bg-green-700 text-white font-semibold rounded-md px-4 py-2 shadow-md transition flex items-center justify-center space-x-2" id="modal-approve">
+         <i class="fas fa-check-circle">
+         </i>
+         <span>
+          Approve
+         </span>
+        </button>
+        <button class="flex-1 bg-red-600 hover:bg-red-700 text-white font-semibold rounded-md px-4 py-2 shadow-md transition flex items-center justify-center space-x-2" id="modal-reject">
+         <i class="fas fa-times-circle">
+         </i>
+         <span>
+          Reject
+         </span>
+        </button>
+       </div>
+     </section>
+    </main>
+   </div>
+  </div>
+  <script type="module">
+    // Import necessary Firebase modules from a specific version
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-app.js";
+    import { getAuth, onAuthStateChanged, signOut, signInAnonymously } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-auth.js";
+    import { getDatabase, ref, onValue, get, child, update } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-database.js";
+
+    // Your given Firebase configuration
+    const firebaseConfig = {
+      apiKey: "AIzaSyAC4h55aA0Zz--V5ejyndzR5WC_-9rAPio",
+      authDomain: "subscribe-bot-6f9b2.firebaseapp.com",
+      databaseURL: "https://subscribe-bot-6f9b2-default-rtdb.firebaseio.com",
+      projectId: "subscribe-bot-6f9b2",
+      storageBucket: "subscribe-bot-6f9b2.firebasestorage.app",
+      messagingSenderId: "141787931031",
+      appId: "1:141787931031:web:2108a3e930f5ce4fbc64d2",
+      measurementId: "G-HSDKCJB14Y"
+    };
+
+    // Initialize Firebase and Realtime Database
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getDatabase(app);
+    let userId;
+
+    // Utility function for escaping HTML
+    function esc(str = "") {
+        return String(str)
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;");
+    }
+
+    // --- Header Template Functions ---
+    function loadHeaderTemplate() {
+      const template = document.getElementById('header-template');
+      if (template) {
+        const clone = document.importNode(template.content, true);
+        document.body.prepend(clone);
+      } else {
+        console.error("Header template not found!");
+      }
+    }
+
+    let headerProfileLogo, userPointsCard, userPointsDisplay, signInStatusCard, signInStatusDisplay,
+        loadingStatusCard, notificationCountDisplay, newNotificationCount, notificationList,
+        welcomeMessage, sliderProfilePic, sliderUserName, loginLogoutButton, notificationButton,
+        notificationDropdown, mobileMenuBtn, mobileSliderMenu, sliderBackdrop;
+
+    function getHeaderElements() {
+      headerProfileLogo = document.getElementById('header-profile-logo');
+      userPointsCard = document.getElementById('userPointsCard');
+      userPointsDisplay = document.getElementById('userPointsDisplay');
+      signInStatusCard = document.getElementById('signInStatusCard');
+      signInStatusDisplay = document.getElementById('signInStatusDisplay');
+      loadingStatusCard = document.getElementById('loadingStatusCard');
+      notificationCountDisplay = document.getElementById('notificationCountDisplay');
+      newNotificationCount = document.getElementById('newNotificationCount');
+      notificationList = document.getElementById('notificationList');
+      welcomeMessage = document.getElementById('welcomeMessage');
+      sliderProfilePic = document.getElementById('slider-profile-pic');
+      sliderUserName = document.getElementById('sliderUserName');
+      loginLogoutButton = document.getElementById('loginLogoutButton');
+      notificationButton = document.getElementById('notificationButton');
+      notificationDropdown = document.getElementById('notificationDropdown');
+      mobileMenuBtn = document.getElementById('mobileMenuBtn');
+      mobileSliderMenu = document.getElementById('mobileSliderMenu');
+      sliderBackdrop = document.getElementById('sliderBackdrop');
+    }
+
+    const DEFAULT_PROFILE_PIC_URL = 'https://i.pravatar.cc/300';
+
+    function setupSignInCardListener() {
+      if (signInStatusCard) {
+        signInStatusCard.addEventListener('click', () => {
+          window.location.href = 'login.html';
+        });
+      }
+    }
+
+    async function loadUserDataFromFirebase() {
+        if (userPointsCard) userPointsCard.classList.add('hidden');
+        if (signInStatusCard) signInStatusCard.classList.add('hidden');
+        if (loadingStatusCard) loadingStatusCard.classList.remove('hidden');
+
+        onAuthStateChanged(auth, async (user) => {
+            let displayNameToShow = "ইউজার";
+            if (user) {
+                try {
+                    const userRef = child(ref(db), `users/${user.uid}`);
+                    const userSnap = await get(userRef);
+                    const userData = userSnap.val() || {};
+
+                    if (userData.profilePictureUrl) {
+                        if (headerProfileLogo) headerProfileLogo.src = userData.profilePictureUrl;
+                        if (sliderProfilePic) sliderProfilePic.src = userData.profilePictureUrl;
+                    } else {
+                        if (headerProfileLogo) headerProfileLogo.src = DEFAULT_PROFILE_PIC_URL;
+                        if (sliderProfilePic) sliderProfilePic.src = DEFAULT_PROFILE_PIC_URL;
+                    }
+                    
+                    if (userData.name) {
+                        displayNameToShow = userData.name;
+                    } else if (user.email) {
+                        displayNameToShow = user.email;
+                    }
+                    
+                    if (typeof userData.points !== 'undefined') {
+                        if (userPointsDisplay) userPointsDisplay.textContent = `${esc(userData.points)} Points`;
+                    } else {
+                        if (userPointsDisplay) userPointsDisplay.textContent = `0 Points`;
+                    }
+
+                    if (userPointsCard) userPointsCard.classList.remove('hidden');
+                    if (loadingStatusCard) loadingStatusCard.classList.add('hidden');
+                    if (welcomeMessage) welcomeMessage.textContent = `স্বাগতম, ${displayNameToShow}`;
+                    if (sliderUserName) sliderUserName.textContent = `স্বাগতম, ${displayNameToShow}`;
+
+                    if (loginLogoutButton) {
+                        loginLogoutButton.textContent = 'লগআউট করুন';
+                        loginLogoutButton.classList.remove('btn-login');
+                        loginLogoutButton.classList.add('btn-logout');
+                        loginLogoutButton.onclick = async () => {
+                            await signOut(auth);
+                            window.location.reload(); 
+                        };
+                    }
+                } catch (error) {
+                    console.error("Error loading user data from Realtime Database:", error);
+                    if (welcomeMessage) welcomeMessage.textContent = `Your Name`;
+                    if (sliderUserName) sliderUserName.textContent = `Your Name`;
+                    if (loadingStatusCard) loadingStatusCard.classList.add('hidden');
+                }
+            } else {
+                if (headerProfileLogo) headerProfileLogo.src = DEFAULT_PROFILE_PIC_URL;
+                if (sliderProfilePic) sliderProfilePic.src = DEFAULT_PROFILE_PIC_URL;
+                if (signInStatusDisplay) signInStatusDisplay.textContent = `লগইন করুন`;
+                if (signInStatusCard) signInStatusCard.classList.remove('hidden');
+                if (loadingStatusCard) loadingStatusCard.classList.add('hidden');
+                if (welcomeMessage) welcomeMessage.textContent = `Your Name`;
+                if (sliderUserName) sliderUserName.textContent = `Your Name`;
+                if (loginLogoutButton) {
+                    loginLogoutButton.textContent = 'লগইন করুন';
+                    loginLogoutButton.classList.remove('btn-logout');
+                    loginLogoutButton.classList.add('btn-login');
+                    loginLogoutButton.onclick = () => { /* Implement login action here */ };
+                }
+            }
+        });
+    }
+
+    async function loadNotifications(userId) {
+      try {
+        const snapshot = await get(child(ref(db), "notifications"));
+        if (!snapshot.exists()) return [];
+        const notificationsData = snapshot.val();
+        const allNotificationData = [];
+        for (const notificationId in notificationsData) {
+          const data = notificationsData[notificationId];
+          const isRead = data.readBy && userId ? data.readBy[userId] : false;
+          allNotificationData.push({ id: notificationId, ...data, read: isRead });
+        }
+        allNotificationData.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
+        return allNotificationData;
+      } catch (error) {
+        console.error("Error loading notifications from Realtime Database:", error);
+        return [];
+      }
+    }
+
+    async function markNotificationAsRead(notificationId, userId) {
+      try {
+        await update(ref(db, `notifications/${notificationId}/readBy/${userId}`), true);
+        loadAllNotificationsForUI();
+      } catch (error) {
+        console.error("Error marking notification as read:", error);
+      }
+    }
+
+    async function loadAllNotificationsForUI() {
+      let unreadCount = 0;
+      const user = auth.currentUser;
+      const currentUserId = user ? user.uid : null;
+      const allNotifications = await loadNotifications(currentUserId);
+      if (notificationList) notificationList.innerHTML = '';
+      if (allNotifications.length === 0) {
+        if (notificationList) notificationList.innerHTML = `<p class="text-center text-gray-500 py-2">কোনো নোটিফিকেশন নেই।</p>`;
+      } else {
+        allNotifications.forEach((notification) => {
+          if (!notification.read) unreadCount++;
+          const notificationItem = document.createElement('a');
+          notificationItem.href = notification.link || '#';
+          notificationItem.className = `block px-4 py-2 hover:bg-gray-100 border-b border-gray-100 last:border-b-0 ${notification.read ? 'opacity-70' : 'font-semibold'}`;
+          let timeAgoText = "এইমাত্র";
+          if (notification.timestamp) {
+            const date = new Date(notification.timestamp);
+            const now = new Date();
+            const diffMs = now - date;
+            const diffMinutes = Math.round(diffMs / (1000 * 60));
+            const diffHours = Math.round(diffMs / (1000 * 60 * 60));
+            const diffDays = Math.round(diffMs / (1000 * 60 * 60 * 24));
+            if (diffMinutes < 1) timeAgoText = "এইমাত্র";
+            else if (diffMinutes < 60) timeAgoText = `${diffMinutes} মিনিট আগে`;
+            else if (diffHours < 24) timeAgoText = `${diffHours} ঘন্টা আগে`;
+            else timeAgoText = `${diffDays} দিন আগে`;
+          }
+          notificationItem.innerHTML = `
+            <p class="text-sm text-gray-800">${esc(notification.title || "Untitled Notification")}</p>
+            ${notification.message ? `<p class="text-xs text-gray-500 mt-1">${esc(notification.message)}</p>` : ""}
+            <p class="text-xs text-gray-400 mt-1">${timeAgoText}</p>
+          `;
+          if (notificationList) notificationList.appendChild(notificationItem);
+          if (!notification.read && currentUserId) {
+            notificationItem.addEventListener('click', () => {
+              markNotificationAsRead(notification.id, currentUserId);
+            });
+          }
+        });
+      }
+      if (notificationCountDisplay) notificationCountDisplay.textContent = unreadCount.toString();
+      if (newNotificationCount) newNotificationCount.textContent = `${unreadCount}টি নতুন`;
+      if (unreadCount === 0 && allNotifications.length === 0) {
+        if (notificationList) notificationList.innerHTML = `<p class="text-center text-gray-500 py-2">কোনো নোটিফিকেশন নেই।</p>`;
+      } else if (unreadCount === 0 && allNotifications.length > 0) {
+        if (newNotificationCount) newNotificationCount.textContent = `০টি নতুন`;
+      }
+    }
+
+    // --- Mobile Slider Menu Logic ---
+    let touchStartX = 0, touchCurrentX = 0, isSwiping = false;
+    function closeSliderMenu() {
+      if (mobileSliderMenu && sliderBackdrop) {
+        mobileSliderMenu.classList.remove('active');
+        sliderBackdrop.classList.remove('active');
+        setTimeout(() => {
+          sliderBackdrop.classList.add('hidden');
+        }, 350);
+        document.body.style.overflow = '';
+        if (mobileMenuBtn) mobileMenuBtn.setAttribute('aria-expanded', 'false');
+      }
+    }
+    function setupMobileMenuListeners() {
+      if (mobileMenuBtn && mobileSliderMenu && sliderBackdrop) {
+        mobileMenuBtn.addEventListener('click', () => {
+          mobileSliderMenu.classList.add('active');
+          sliderBackdrop.classList.remove('hidden');
+          sliderBackdrop.classList.add('active');
+          document.body.style.overflow = 'hidden';
+          mobileMenuBtn.setAttribute('aria-expanded', 'true');
+        });
+        sliderBackdrop.addEventListener('click', closeSliderMenu);
+        mobileSliderMenu.addEventListener('touchstart', (e) => {
+          if (e.touches.length === 1) {
+            touchStartX = e.touches[0].clientX;
+            isSwiping = true;
+            mobileSliderMenu.style.transition = 'none';
+          }
+        });
+        mobileSliderMenu.addEventListener('touchmove', (e) => {
+          if (!isSwiping) return;
+          touchCurrentX = e.touches[0].clientX;
+          const diffX = touchStartX - touchCurrentX;
+          if (diffX > 0) {
+            mobileSliderMenu.style.right = `${-diffX}px`;
+            const opacity = 1 - (diffX / mobileSliderMenu.offsetWidth);
+            sliderBackdrop.style.opacity = Math.max(0, opacity);
+          }
+        });
+        mobileSliderMenu.addEventListener('touchend', () => {
+          if (!isSwiping) return;
+          const diffX = touchStartX - touchCurrentX;
+          mobileSliderMenu.style.transition = 'right 0.35s cubic-bezier(0.4, 0, 0.2, 1)';
+          if (diffX > mobileSliderMenu.offsetWidth / 3) {
+            closeSliderMenu();
+          } else {
+            mobileSliderMenu.style.right = '0';
+            sliderBackdrop.style.opacity = '1';
+          }
+          isSwiping = false;
+          touchStartX = 0;
+          touchCurrentX = 0;
+        });
+      }
+    }
+    function setupNotificationDropdownListeners() {
+      if (notificationButton && notificationDropdown) {
+        notificationButton.addEventListener('click', (event) => {
+          event.stopPropagation();
+          notificationDropdown.classList.toggle('hidden');
+        });
+        document.addEventListener('click', (event) => {
+          if (!notificationDropdown.contains(event.target) && !notificationButton.contains(event.target)) {
+            notificationDropdown.classList.add('hidden');
+          }
+        });
+      }
+    }
+
+    // Submission specific DOM Elements (already present)
+    const searchInput = document.getElementById('search-input');
+    const approveSelectedBtn = document.getElementById('approve-selected');
+    const rejectSelectedBtn = document.getElementById('reject-selected');
+    const submissionGallery = document.getElementById('submission-gallery');
+    const loadMoreButton = document.getElementById('load-more-button');
+    const tabPending = document.getElementById('tab-pending');
+    const tabApproved = document.getElementById('tab-approved');
+    const tabRejected = document.getElementById('tab-rejected');
+
+    // Modal Elements (already present)
+    const imageModal = document.getElementById('image-modal');
+    const modalCloseBtn = document.getElementById('modal-close');
+    const modalImage = document.getElementById('modal-image');
+    const modalUserName = document.getElementById('modal-user-name');
+    const modalUserId = document.getElementById('modal-user-id');
+    const modalSubmissionDate = document.getElementById('modal-submission-date');
+    const modalStatus = document.getElementById('modal-status');
+    const rejectReasonContainer = document.getElementById('reject-reason-container');
+    const rejectReasonInput = document.getElementById('reject-reason');
+    const modalApproveBtn = document.getElementById('modal-approve');
+    const modalRejectBtn = document.getElementById('modal-reject');
+    const zoomInBtn = document.getElementById('zoom-in');
+    const zoomOutBtn = document.getElementById('zoom-out');
+    const downloadImageLink = document.getElementById('download-image');
+    const prevImageBtn = document.getElementById('prev-image');
+    const nextImageBtn = document.getElementById('next-image');
+
+    // State
+    let currentUser = null;
+    let userPoints = 0;
+    let notificationsCount = 0;
+
+    // Submissions data
+    let submissions = [];
+    let filteredSubmissions = [];
+    let currentTab = 'pending'; // pending, approved, rejected
+    let pageSize = 12;
+    let currentPage = 1;
+    let currentTaskId = null; // To track the current task ID
+
+    // Modal state
+    let modalCurrentIndex = 0;
+    let modalZoom = 1;
+
+    // Utility: format date to readable string (Bangla)
+    function formatDate(timestamp) {
+      if (!timestamp) return '-';
+      const date = new Date(timestamp);
+      return date.toLocaleDateString('bn-BD', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+      });
+    }
+
+    // Utility: status badge classes & text
+    function getStatusBadge(status) {
+      switch (status) {
+        case 'pending':
+          return { text: 'Pending', classes: 'bg-yellow-400 text-yellow-900' };
+        case 'approved':
+          return { text: 'Approved', classes: 'bg-green-500 text-green-100' };
+        case 'rejected':
+          return { text: 'Rejected', classes: 'bg-red-500 text-red-100' };
+        default:
+          return { text: 'Unknown', classes: 'bg-gray-400 text-gray-900' };
+      }
+    }
+
+    // Show loading placeholders
+    function showLoadingPlaceholders() {
+      submissionGallery.innerHTML = '';
+      for (let i = 0; i < pageSize; i++) { // Show placeholders for initial page size
+        const placeholder = document.createElement('div');
+        placeholder.className = 'animate-pulse bg-white rounded-lg shadow p-4 flex flex-col space-y-3';
+        placeholder.innerHTML = `
+          <div class="h-32 bg-gray-200 rounded-md"></div>
+          <div class="h-4 bg-gray-200 rounded w-3/4"></div>
+          <div class="h-4 bg-gray-200 rounded w-1/2"></div>
+          <div class="h-6 bg-gray-200 rounded w-1/3"></div>
+        `;
+        submissionGallery.appendChild(placeholder);
+      }
+    }
+
+    // Render submissions cards
+    function renderSubmissions() {
+      submissionGallery.innerHTML = '';
+      const start = 0;
+      const end = currentPage * pageSize;
+      const toRender = filteredSubmissions.slice(start, end);
+
+      if (toRender.length === 0) {
+        submissionGallery.innerHTML = `<p class="text-center text-gray-600 col-span-full py-10">কোনো সাবমিশন পাওয়া যায়নি।</p>`;
+        loadMoreButton.classList.add('hidden');
+        return;
+      }
+
+      toRender.forEach((submission, index) => {
+        const card = document.createElement('article');
+        card.className = 'bg-white rounded-lg shadow-md p-4 flex flex-col space-y-3 relative';
+        card.setAttribute('tabindex', '0');
+        card.setAttribute('aria-label', `সাবমিশন: ${submission.userName}, আইডি: ${submission.userId}, তারিখ: ${formatDate(submission.timestamp)}, স্ট্যাটাস: ${submission.status}`);
+
+        // Status badge
+        const statusBadge = getStatusBadge(submission.status);
+
+        let actionButtonsHTML = '';
+        if (currentTab === 'pending') {
+          actionButtonsHTML = `
+            <button class="approve-btn flex-1 bg-green-600 hover:bg-green-700 text-white font-semibold rounded-md px-3 py-2 shadow-md transition flex items-center justify-center space-x-2" data-id="${submission.id}" data-user-id="${submission.userId}" aria-label="Approve submission by ${submission.userName}">
+              <i class="fas fa-check"></i>
+              <span>Approve</span>
+            </button>
+            <button class="reject-btn flex-1 bg-red-600 hover:bg-red-700 text-white font-semibold rounded-md px-3 py-2 shadow-md transition flex items-center justify-center space-x-2" data-id="${submission.id}" data-user-id="${submission.userId}" aria-label="Reject submission by ${submission.userName}">
+              <i class="fas fa-times"></i>
+              <span>Reject</span>
+            </button>
+          `;
+        } else if (currentTab === 'approved' || currentTab === 'rejected') {
+          actionButtonsHTML = `
+            <button class="recheck-btn w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-md px-3 py-2 shadow-md transition flex items-center justify-center space-x-2" data-id="${submission.id}" data-user-id="${submission.userId}" aria-label="Recheck submission by ${submission.userName}">
+              <i class="fas fa-redo"></i>
+              <span>Recheck</span>
+            </button>
+          `;
+        }
+
+        card.innerHTML = `
+          <div class="flex items-center justify-between">
+            <label class="inline-flex items-center space-x-2 cursor-pointer select-none">
+              <input type="checkbox" class="submission-checkbox" data-id="${submission.id}" aria-label="Select submission by ${submission.userName}" />
+              <span class="text-gray-700 font-semibold">${submission.userName}</span>
+            </label>
+            <span class="text-xs px-2 py-1 rounded ${statusBadge.classes} font-semibold select-none">${statusBadge.text}</span>
+          </div>
+          <p class="text-sm text-gray-600">User ID: <span class="font-mono">${submission.userId}</span></p>
+          <p class="text-sm text-gray-600">Submission Date: ${formatDate(submission.timestamp)}</p>
+          <button class="focus:outline-none focus:ring-2 focus:ring-cyan-400 rounded overflow-hidden" aria-label="View submission screenshot of ${submission.userName}">
+            <img
+              src="${submission.imageUrl}"
+              alt="সাবমিশনের স্ক্রিনশট থাম্বনেইল: ${submission.userName} এর সাবমিশনের স্ক্রিনশট"
+              class="w-full h-40 object-cover rounded-md shadow-sm"
+              loading="lazy"
+              data-index="${index}"
+            />
+          </button>
+          <div class="flex space-x-3 mt-2">
+            ${actionButtonsHTML}
+          </div>
+        `;
+
+        submissionGallery.appendChild(card);
+      });
+
+      // Show or hide Load More button
+      if (filteredSubmissions.length > currentPage * pageSize) {
+        loadMoreButton.classList.remove('hidden');
+      } else {
+        loadMoreButton.classList.add('hidden');
+      }
+    }
+
+    // Filter submissions by search input and current tab
+    function filterSubmissions() {
+      const query = searchInput.value.trim().toLowerCase();
+      filteredSubmissions = submissions.filter((sub) => {
+        const matchesTab = sub.status === currentTab;
+        if (!matchesTab) return false;
+        if (!query) return true;
+        return (
+          (sub.userName && sub.userName.toLowerCase().includes(query)) ||
+          (sub.userId && sub.userId.toLowerCase().includes(query))
+        );
+      });
+      currentPage = 1; // Reset to first page on filter change
+      renderSubmissions();
+    }
+
+    // Load submissions from Firebase Realtime Database for specific taskId
+    function loadSubmissionsRealtime(taskId) {
+      // Only show loading placeholders for submissions if taskId is present
+      if (taskId) {
+        showLoadingPlaceholders();
+        submissionGallery.setAttribute('aria-busy', 'true');
+      } else {
+        submissionGallery.innerHTML = `<p class="text-center text-red-600 col-span-full py-10">কোনো টাস্ক আইডি পাওয়া যায়নি।</p>`;
+        loadingStatusCard.classList.add('hidden'); // Hide loading card if no taskId
+        return;
+      }
+
+      const submissionsRef = ref(db, `submissions`);
+      onValue(submissionsRef, async (snapshot) => {
+        const allUsersSubmissions = snapshot.val() || {};
+        submissions = [];
+
+        for (const userId in allUsersSubmissions) {
+            if (allUsersSubmissions[userId][taskId]) { // Check for submissions under current taskId for this user
+                const taskSubmissions = allUsersSubmissions[userId][taskId];
+                for (const submissionId in taskSubmissions) {
+                    const submissionData = taskSubmissions[submissionId];
+                    // Fetch user details (displayName, profilePictureUrl)
+                    let userName = 'অজানা';
+                    let userProfilePic = 'https://i.pravatar.cc/300'; // Default
+                    try {
+                        const userSnapshot = await get(child(ref(db), `users/${userId}`));
+                        const userData = userSnapshot.val();
+                        if (userData) {
+                            userName = userData.displayName || userName;
+                            userProfilePic = userData.profilePictureUrl || userProfilePic;
+                        }
+                    } catch (error) {
+                        console.warn(`Error fetching user data for ${userId}:`, error);
+                    }
+
+                    submissions.push({
+                        id: submissionId, // This is the unique submission ID
+                        taskId: taskId, // Task ID added
+                        userId: userId, // User ID added
+                        userName: userName,
+                        userProfilePic: userProfilePic,
+                        timestamp: submissionData.timestamp || 0,
+                        imageUrl: submissionData.imageUrl || 'https://placehold.co/400x300/png?text=No+Image',
+                        submissionText: submissionData.submissionText || '',
+                        status: submissionData.status || 'pending',
+                        rejectReason: submissionData.rejectReason || '',
+                        approvedDate: submissionData.approvedDate || 0,
+                    });
+                }
+            }
+        }
+
+        // Sort submissions by timestamp (newest first)
+        submissions.sort((a, b) => b.timestamp - a.timestamp);
+
+        filterSubmissions();
+        submissionGallery.setAttribute('aria-busy', 'false');
+        loadingStatusCard.classList.add('hidden'); // Hide loading status
+      }, (error) => {
+        console.error("Failed to load submissions:", error);
+        submissionGallery.innerHTML = `<p class="text-center text-red-600 col-span-full py-10">সাবমিশন লোড করতে ব্যর্থ হয়েছে।</p>`;
+        loadingStatusCard.classList.add('hidden');
+      });
+    }
+
+    // Initial setup on DOMContentLoaded
+    document.addEventListener('DOMContentLoaded', () => {
+        loadHeaderTemplate();
+        getHeaderElements();
+        setupSignInCardListener();
+        setupMobileMenuListeners();
+        setupNotificationDropdownListeners();
+        
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+                loadUserDataFromFirebase();
+                loadAllNotificationsForUI();
+
+                const urlParams = new URLSearchParams(window.location.search);
+                currentTaskId = urlParams.get('taskId');
+
+                if (currentTaskId) {
+                    loadSubmissionsRealtime(currentTaskId);
+                } else {
+                    submissionGallery.innerHTML = `<p class="text-center text-red-600 col-span-full py-10">কোনো টাস্ক আইডি পাওয়া যায়নি।</p>`;
+                    loadMoreButton.classList.add('hidden');
+                }
+            } else {
+                if (headerProfileLogo) headerProfileLogo.src = DEFAULT_PROFILE_PIC_URL;
+                if (userPointsCard) userPointsCard.classList.add('hidden');
+                if (signInStatusCard) signInStatusCard.classList.remove('hidden');
+                if (signInStatusDisplay) signInStatusDisplay.textContent = `লগইন করুন`;
+                if (loadingStatusCard) loadingStatusCard.classList.add('hidden');
+                if (notificationCountDisplay) notificationCountDisplay.classList.add('hidden');
+                if (submissionGallery) submissionGallery.innerHTML = `<p class="text-center text-gray-600 col-span-full py-10">অনুগ্রহ করে লগইন করুন।</p>`;
+                if (loadMoreButton) loadMoreButton.classList.add('hidden');
+                if (welcomeMessage) welcomeMessage.textContent = `স্বাগতম, অতিথি`;
+                if (sliderUserName) sliderUserName.textContent = `স্বাগতম, অতিথি`;
+                if (sliderProfilePic) sliderProfilePic.src = DEFAULT_PROFILE_PIC_URL;
+                
+                if (loginLogoutButton) {
+                    loginLogoutButton.textContent = 'লগইন করুন';
+                    loginLogoutButton.classList.remove('btn-logout');
+                    loginLogoutButton.classList.add('btn-login');
+                    loginLogoutButton.onclick = () => {
+                        window.location.href = 'login.html';
+                    };
+                }
+            }
+        });
+    });
+
+    // Tab switching
+    function switchTab(tab) {
+      currentTab = tab;
+      [tabPending, tabApproved, tabRejected].forEach((btn) => {
+        btn.classList.remove('border-cyan-500', 'text-cyan-700');
+        btn.classList.add('border-transparent', 'text-gray-600', 'hover:text-cyan-700');
+        btn.setAttribute('aria-selected', 'false');
+        btn.setAttribute('tabindex', '-1');
+      });
+      if (tab === 'pending') {
+        tabPending.classList.add('border-cyan-500', 'text-cyan-700');
+        tabPending.classList.remove('border-transparent', 'text-gray-600', 'hover:text-cyan-700');
+        tabPending.setAttribute('aria-selected', 'true');
+        tabPending.setAttribute('tabindex', '0');
+      } else if (tab === 'approved') {
+        tabApproved.classList.add('border-cyan-500', 'text-cyan-700');
+        tabApproved.classList.remove('border-transparent', 'text-gray-600', 'hover:text-cyan-700');
+        tabApproved.setAttribute('aria-selected', 'true');
+        tabApproved.setAttribute('tabindex', '0');
+      } else if (tab === 'rejected') {
+        tabRejected.classList.add('border-cyan-500', 'text-cyan-700');
+        tabRejected.classList.remove('border-transparent', 'text-gray-600', 'hover:text-cyan-700');
+        tabRejected.setAttribute('aria-selected', 'true');
+        tabRejected.setAttribute('tabindex', '0');
+      }
+      currentPage = 1;
+      filterSubmissions();
+    }
+
+    tabPending.addEventListener('click', () => switchTab('pending'));
+    tabApproved.addEventListener('click', () => switchTab('approved'));
+    tabRejected.addEventListener('click', () => switchTab('rejected'));
+
+    // Search input event
+    searchInput.addEventListener('input', () => {
+      currentPage = 1;
+      filterSubmissions();
+    });
+
+    // Load more button
+    loadMoreButton.addEventListener('click', () => {
+      currentPage++;
+      renderSubmissions();
+    });
+
+    // Approve/Reject/Recheck single submission
+    submissionGallery.addEventListener('click', (e) => {
+      const approveBtn = e.target.closest('.approve-btn');
+      const rejectBtn = e.target.closest('.reject-btn');
+      const recheckBtn = e.target.closest('.recheck-btn');
+      const imgElement = e.target.tagName === 'IMG' && e.target.dataset.index !== undefined;
+
+      if (approveBtn) {
+        const id = approveBtn.dataset.id;
+        const userId = approveBtn.dataset.userId;
+        approveSubmission(id, userId);
+      } else if (rejectBtn) {
+        const id = rejectBtn.dataset.id;
+        const userId = rejectBtn.dataset.userId;
+        openModalById(id, true, userId);
+      } else if (recheckBtn) {
+        const id = recheckBtn.dataset.id;
+        const userId = recheckBtn.dataset.userId;
+        recheckSubmission(id, userId);
+      } else if (imgElement) {
+        openModalByIndex(parseInt(e.target.dataset.index));
+      }
+    });
+
+    // Bulk Approve Selected
+    approveSelectedBtn.addEventListener('click', () => {
+      const selectedSubmissions = getSelectedSubmissionsData();
+      if (selectedSubmissions.length === 0) {
+        alert('অনুগ্রহ করে কমপক্ষে একটি সাবমিশন সিলেক্ট করুন।');
+        return;
+      }
+      if (confirm(`আপনি কি ${selectedSubmissions.length}টি সাবমিশন অ্যাপ্রুভ করতে চান?`)) {
+        selectedSubmissions.forEach(sub => approveSubmission(sub.id, sub.userId));
+      }
+    });
+
+    // Bulk Reject Selected
+    rejectSelectedBtn.addEventListener('click', () => {
+      const selectedSubmissions = getSelectedSubmissionsData();
+      if (selectedSubmissions.length === 0) {
+        alert('অনুগ্রহ করে কমপক্ষে একটি সাবমিশন সিলেক্ট করুন।');
+        return;
+      }
+      const firstSubmission = selectedSubmissions[0];
+      openModalById(firstSubmission.id, true, firstSubmission.userId, () => {
+        selectedSubmissions.slice(1).forEach(sub => rejectSubmission(sub.id, sub.userId, 'Bulk rejected'));
+      });
+    });
+
+    // Get selected submission IDs and their data (including userId)
+    function getSelectedSubmissionsData() {
+      const checkboxes = submissionGallery.querySelectorAll('.submission-checkbox:checked');
+      const selectedIds = Array.from(checkboxes).map(cb => cb.dataset.id);
+      return submissions.filter(sub => selectedIds.includes(sub.id));
+    }
+
+
+    // Approve submission
+    async function approveSubmission(submissionId, userId) {
+      if (!submissionId || !userId) {
+          console.error("Missing submissionId or userId for approval.");
+          return;
+      }
+      try {
+          const updates = {};
+          updates[`submissions/${userId}/${currentTaskId}/${submissionId}/status`] = 'approved';
+          updates[`submissions/${userId}/${currentTaskId}/${submissionId}/approvedDate`] = Date.now();
+          updates[`submissions/${userId}/${currentTaskId}/${submissionId}/rejectReason`] = '';
+          
+          // Add points to user
+          const userRef = child(ref(db), `users/${userId}`);
+          const userSnap = await get(userRef);
+          const userData = userSnap.val();
+          if (userSnap.exists()) {
+              const newPoints = (userData.points || 0) + 10; // Assuming 10 points per approval
+              updates[`users/${userId}/points`] = newPoints;
+          }
+          
+          await update(ref(db), updates);
+
+          console.log(`Submission ${submissionId} by user ${userId} approved.`);
+
+          await update(child(ref(db), "notifications"), {
+              title: 'সাবমিশন অ্যাপ্রুভড',
+              message: `আপনার টাস্ক সাবমিশন (#${submissionId.substring(0, 5)}) অ্যাপ্রুভ করা হয়েছে।`,
+              timestamp: Date.now(),
+              link: `mytasklist.html`,
+              readBy: { [userId]: false }
+          });
+          console.log(`Notification sent to user ${userId} for approval.`);
+
+      } catch (err) {
+          alert('Approve করতে সমস্যা হয়েছে: ' + err.message);
+          console.error("Error approving submission:", err);
+      }
+    }
+
+    // Reject submission with reason
+    async function rejectSubmission(submissionId, userId, reason) {
+      if (!submissionId || !userId) {
+          console.error("Missing submissionId or userId for rejection.");
+          return;
+      }
+      try {
+          const updates = {};
+          updates[`submissions/${userId}/${currentTaskId}/${submissionId}/status`] = 'rejected';
+          updates[`submissions/${userId}/${currentTaskId}/${submissionId}/approvedDate`] = Date.now();
+          updates[`submissions/${userId}/${currentTaskId}/${submissionId}/rejectReason`] = reason || '';
+
+          await update(ref(db), updates);
+          
+          console.log(`Submission ${submissionId} by user ${userId} rejected.`);
+
+          await update(child(ref(db), "notifications"), {
+              title: 'সাবমিশন রিজেক্টেড',
+              message: `আপনার টাস্ক সাবমিশন (#${submissionId.substring(0, 5)}) রিজেক্ট করা হয়েছে। কারণ: ${reason || 'নির্দিষ্ট কারণ নেই'}`,
+              timestamp: Date.now(),
+              link: `mytasklist.html`,
+              readBy: { [userId]: false }
+          });
+          console.log(`Notification sent to user ${userId} for rejection.`);
+
+      } catch (err) {
+          alert('Reject করতে সমস্যা হয়েছে: ' + err.message);
+          console.error("Error rejecting submission:", err);
+      }
+    }
+
+    // New function: Recheck submission (set status back to pending)
+    async function recheckSubmission(submissionId, userId) {
+      if (!submissionId || !userId) {
+          console.error("Missing submissionId or userId for recheck.");
+          return;
+      }
+      if (!confirm('আপনি কি এই সাবমিশনটি আবার Pending স্ট্যাটাসে পাঠাতে চান?')) {
+          return;
+      }
+      try {
+          await update(ref(db, `submissions/${userId}/${currentTaskId}/${submissionId}`), {
+              status: 'pending',
+              approvedDate: null,
+              rejectReason: null,
+          });
+          console.log(`Submission ${submissionId} by user ${userId} set to pending for recheck.`);
+
+          await update(child(ref(db), "notifications"), {
+              title: 'সাবমিশন Recheck-এর জন্য',
+              message: `আপনার টাস্ক সাবমিশন (#${submissionId.substring(0, 5)}) Recheck-এর জন্য আবার Pending স্ট্যাটাসে পাঠানো হয়েছে।`,
+              timestamp: Date.now(),
+              link: `mytasklist.html`,
+              readBy: { [userId]: false }
+          });
+          console.log(`Notification sent to user ${userId} for recheck.`);
+
+      } catch (err) {
+          alert('Recheck করতে সমস্যা হয়েছে: ' + err.message);
+          console.error("Error rechecking submission:", err);
+      }
+    }
+
+
+    // Modal open by submission index
+    function openModalByIndex(index) {
+      modalCurrentIndex = index;
+      showModalSubmission();
+      imageModal.classList.remove('hidden');
+      document.body.style.overflow = 'hidden';
+      rejectReasonContainer.classList.add('hidden'); // Hide reject reason by default for general view
+      rejectReasonInput.value = '';
+    }
+
+    let modalRejectCallback = null;
+    function openModalById(id, showRejectInput = false, userIdForModal, callback = null) {
+      const index = filteredSubmissions.findIndex(s => s.id === id);
+      if (index === -1) return;
+      modalCurrentIndex = index;
+      modalRejectCallback = callback;
+      showModalSubmission(showRejectInput, userIdForModal);
+      imageModal.classList.remove('hidden');
+      document.body.style.overflow = 'hidden';
+      if (showRejectInput) {
+        rejectReasonContainer.classList.remove('hidden');
+      } else {
+        rejectReasonContainer.classList.add('hidden');
+        rejectReasonInput.value = '';
+      }
+    }
+
+    // Show submission details in modal
+    function showModalSubmission(showRejectInput = false, userIdForModal = null) {
+      const sub = filteredSubmissions[modalCurrentIndex];
+      if (!sub) return;
+      modalImage.src = esc(sub.imageUrl);
+      modalImage.alt = `সাবমিশনের স্ক্রিনশট বড় ভিউ: ${esc(sub.userName)} এর সাবমিশন`;
+      modalUserName.textContent = esc(sub.userName);
+      modalUserId.textContent = esc(sub.userId);
+      modalSubmissionDate.textContent = formatDate(sub.timestamp);
+      const statusBadge = getStatusBadge(sub.status);
+      modalStatus.textContent = statusBadge.text;
+      modalStatus.className = `inline-block px-2 py-1 rounded text-white font-semibold ${statusBadge.classes}`;
+      rejectReasonInput.value = sub.rejectReason || '';
+      if (showRejectInput || sub.status === 'rejected') {
+        rejectReasonContainer.classList.remove('hidden');
+      } else {
+        rejectReasonContainer.classList.add('hidden');
+      }
+      modalZoom = 1;
+      modalImage.style.transform = `scale(${modalZoom})`;
+      downloadImageLink.href = esc(sub.imageUrl);
+
+      modalApproveBtn.style.display = 'none';
+      modalRejectBtn.style.display = 'none';
+
+      let modalRecheckBtn = document.getElementById('modal-recheck');
+      if (!modalRecheckBtn) {
+          modalRecheckBtn = document.createElement('button');
+          modalRecheckBtn.id = 'modal-recheck';
+          modalRecheckBtn.className = 'flex-1 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-md px-4 py-2 shadow-md transition flex items-center justify-center space-x-2';
+          modalRecheckBtn.innerHTML = '<i class="fas fa-redo"></i> <span>Recheck</span>';
+          modalRecheckBtn.addEventListener('click', () => {
+              const submissionId = modalRecheckBtn.dataset.id;
+              const userId = modalRecheckBtn.dataset.userId;
+              recheckSubmission(submissionId, userId);
+              closeModal();
+          });
+          modalApproveBtn.parentNode.appendChild(modalRecheckBtn);
+      }
+      modalRecheckBtn.style.display = 'none';
+
+      if (sub.status === 'pending') {
+          modalApproveBtn.style.display = 'flex';
+          modalRejectBtn.style.display = 'flex';
+          modalApproveBtn.disabled = false;
+          modalRejectBtn.disabled = false;
+          modalApproveBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+          modalRejectBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+      } else if (sub.status === 'approved' || sub.status === 'rejected') {
+          modalRecheckBtn.style.display = 'flex';
+          modalRecheckBtn.disabled = false;
+          modalRecheckBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+          rejectReasonContainer.classList.remove('hidden');
+      } else {
+          modalApproveBtn.disabled = true;
+          modalRejectBtn.disabled = true;
+          modalRecheckBtn.disabled = true;
+          modalApproveBtn.classList.add('opacity-50', 'cursor-not-allowed');
+          modalRejectBtn.classList.add('opacity-50', 'cursor-not-allowed');
+          modalRecheckBtn.classList.add('opacity-50', 'cursor-not-allowed');
+      }
+
+      modalApproveBtn.dataset.id = sub.id;
+      modalApproveBtn.dataset.userId = sub.userId;
+      modalRejectBtn.dataset.id = sub.id;
+      modalRejectBtn.dataset.userId = sub.userId;
+      modalRecheckBtn.dataset.id = sub.id;
+      modalRecheckBtn.dataset.userId = sub.userId;
+    }
+
+    // Modal close
+    modalCloseBtn.addEventListener('click', closeModal);
+    imageModal.addEventListener('click', (e) => {
+      if (e.target === imageModal) closeModal();
+    });
+    function closeModal() {
+      imageModal.classList.add('hidden');
+      document.body.style.overflow = '';
+      modalRejectCallback = null;
+      rejectReasonInput.value = '';
+    }
+
+    modalApproveBtn.addEventListener('click', () => {
+      const submissionId = modalApproveBtn.dataset.id;
+      const userId = modalApproveBtn.dataset.userId;
+      const sub = filteredSubmissions.find(s => s.id === submissionId);
+      if (!sub || sub.status !== 'pending') return;
+      approveSubmission(submissionId, userId);
+      closeModal();
+    });
+
+    modalRejectBtn.addEventListener('click', () => {
+      const submissionId = modalRejectBtn.dataset.id;
+      const userId = modalRejectBtn.dataset.userId;
+      const sub = filteredSubmissions.find(s => s.id === submissionId);
+      if (!sub || sub.status !== 'pending') return;
+      const reason = rejectReasonInput.value.trim();
+      if (!reason) {
+        alert('Reject করার কারণ লিখুন।');
+        rejectReasonInput.focus();
+        return;
+      }
+      rejectSubmission(submissionId, userId, reason);
+      closeModal();
+      if (modalRejectCallback) {
+        modalRejectCallback();
+        modalRejectCallback = null;
+      }
+    });
+
+    zoomInBtn.addEventListener('click', () => {
+      modalZoom = Math.min(modalZoom + 0.25, 3);
+      modalImage.style.transform = `scale(${modalZoom})`;
+    });
+    zoomOutBtn.addEventListener('click', () => {
+      modalZoom = Math.max(modalZoom - 0.25, 1);
+      modalImage.style.transform = `scale(${modalZoom})`;
+    });
+
+    prevImageBtn.addEventListener('click', () => {
+      modalCurrentIndex = (modalCurrentIndex - 1 + filteredSubmissions.length) % filteredSubmissions.length;
+      showModalSubmission();
+    });
+    nextImageBtn.addEventListener('click', () => {
+      modalCurrentIndex = (modalCurrentIndex + 1) % filteredSubmissions.length;
+      showModalSubmission();
+    });
+
+    document.addEventListener('keydown', (e) => {
+      if (imageModal.classList.contains('hidden')) return;
+      if (e.key === 'Escape') {
+        closeModal();
+      } else if (e.key === 'ArrowLeft') {
+        prevImageBtn.click();
+      } else if (e.key === 'ArrowRight') {
+        nextImageBtn.click();
+      } else if (e.key === '+') {
+        zoomInBtn.click();
+      } else if (e.key === '-') {
+        zoomOutBtn.click();
+      }
+    });
+  </script>
+ </body>
+</html>
+

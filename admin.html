@@ -1,0 +1,1539 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="utf-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1"/>
+    <title>Water Drop - Admin Panel</title>
+    <script src="https://cdn.tailwindcss.com"> </script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri&amp;display=swap" rel="stylesheet"/>
+    <style>
+        body {
+            font-family: 'Hind Siliguri', sans-serif;
+            background-color: #f0f9ff; /* Blue-50 */
+            color: #1a202c; /* Gray-900 */
+        }
+        .container {
+            max-width: 1280px;
+            margin-left: auto;
+            margin-right: auto;
+            padding: 1rem;
+        }
+        .card {
+            background-color: #ffffff;
+            border-radius: 0.75rem;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            padding: 2rem;
+        }
+        .header {
+            background: linear-gradient(135deg, #1d4ed8, #3b82f6);
+            color: white;
+            padding: 1.5rem;
+            border-bottom-left-radius: 1rem;
+            border-bottom-right-radius: 1rem;
+            text-align: center;
+        }
+        /* Hide traditional table headers on small screens */
+        @media (max-width: 767px) {
+            .table-container {
+                overflow-x: hidden;
+            }
+            .table-container table thead {
+                display: none;
+            }
+            .table-container table,
+            .table-container table tbody,
+            .table-container table tr,
+            .table-container table td {
+                display: block;
+                width: 100%;
+            }
+            .table-container table tr {
+                margin-bottom: 1rem;
+                border: 1px solid #e2e8f0;
+                border-radius: 0.5rem;
+                background-color: white;
+            }
+            .table-container table td {
+                text-align: right;
+                padding-left: 50%;
+                position: relative;
+                border: none;
+            }
+            .table-container table td::before {
+                content: attr(data-label);
+                position: absolute;
+                left: 1rem;
+                width: calc(50% - 1.5rem);
+                padding-right: 1rem;
+                white-space: nowrap;
+                text-align: left;
+                font-weight: 600;
+                color: #4b5563; /* Gray-700 */
+            }
+        }
+
+        th, td {
+            padding: 1rem;
+            text-align: left;
+        }
+        th {
+            background-color: #bfdbfe; /* Blue-200 */
+            color: #1e40af; /* Blue-800 */
+            font-weight: 600;
+            white-space: nowrap;
+        }
+        tbody tr:nth-child(odd) {
+            background-color: #f9fafb; /* Gray-50 */
+        }
+        tbody tr:nth-child(even) {
+            background-color: #ffffff;
+        }
+        .action-button {
+            padding: 0.5rem 1rem;
+            border-radius: 0.5rem;
+            font-weight: 600;
+            transition: all 0.2s ease-in-out;
+            cursor: pointer;
+        }
+        .approve-btn {
+            background-color: #22c55e;
+            color: white;
+        }
+        .approve-btn:hover {
+            background-color: #16a34a;
+        }
+        .reject-btn {
+            background-color: #ef4444;
+            color: white;
+        }
+        .reject-btn:hover {
+            background-color: #dc2626;
+        }
+        .spinner {
+            border: 2px solid rgba(0, 0, 0, 0.1);
+            border-left-color: #ffffff;
+            border-radius: 50%;
+            width: 16px;
+            height: 16px;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        /* Modal Styles */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.75);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+        .modal-content {
+            background-color: white;
+            padding: 2rem;
+            border-radius: 0.75rem;
+            max-width: 90%;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+        .tab-button.active {
+            background-color: #60a5fa;
+            color: white;
+        }
+        .tab-content {
+            display: none;
+        }
+        .tab-content.active {
+            display: block;
+        }
+        /* Modal confirmation */
+        #confirmation-modal .modal-content {
+            padding: 1rem;
+            text-align: center;
+        }
+        #rejection-modal .modal-content {
+            width: 500px;
+        }
+        .reject-reason-input {
+            width: 100%;
+            padding: 0.75rem;
+            border-radius: 0.5rem;
+            border: 1px solid #e2e8f0;
+        }
+        .search-input {
+            padding: 0.75rem 1.25rem;
+            border: 1px solid #cbd5e1;
+            border-radius: 0.5rem;
+            width: 100%;
+            transition: all 0.2s;
+        }
+        .search-input:focus {
+            outline: none;
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+        }
+    </style>
+</head>
+<body class="bg-blue-50">
+
+<div class="header">
+    <h1 class="text-3xl sm:text-4xl font-extrabold">অ্যাডমিন ড্যাশবোর্ড</h1>
+    <p class="text-lg mt-2 font-light">ব্যবহারকারী, টাস্ক এবং সাবমিশন ম্যানেজ করুন</p>
+</div>
+
+<div class="container py-8">
+    <div class="flex flex-col sm:flex-row mb-6 bg-white rounded-lg shadow-md p-2 space-y-2 sm:space-y-0 sm:space-x-2">
+        <button id="users-tab-btn" class="flex-1 tab-button px-4 py-2 text-sm sm:text-base font-semibold rounded-lg transition active">
+            <i class="fas fa-users mr-2"></i> ব্যবহারকারী
+        </button>
+        <button id="tasks-tab-btn" class="flex-1 tab-button px-4 py-2 text-sm sm:text-base font-semibold rounded-lg transition">
+            <i class="fas fa-tasks mr-2"></i> টাস্ক
+        </button>
+        <button id="submissions-tab-btn" class="flex-1 tab-button px-4 py-2 text-sm sm:text-base font-semibold rounded-lg transition">
+            <i class="fas fa-paper-plane mr-2"></i> সাবমিশন
+        </button>
+        <button id="orders-tab-btn" class="flex-1 tab-button px-4 py-2 text-sm sm:text-base font-semibold rounded-lg transition">
+            <i class="fas fa-shopping-cart mr-2"></i> অর্ডার
+        </button>
+        <!-- NEW: Promotion Banners Tab Button -->
+        <button id="promotions-tab-btn" class="flex-1 tab-button px-4 py-2 text-sm sm:text-base font-semibold rounded-lg transition">
+            <i class="fas fa-bullhorn mr-2"></i> প্রমোশন ব্যানার
+        </button>
+    </div>
+
+    <!-- Users Tab -->
+    <div id="users-tab-content" class="tab-content active">
+        <!-- NEW: Advanced Referral Settings -->
+        <div class="card mb-6">
+            <h2 class="text-2xl font-bold mb-4 text-blue-800">রেফারেল সেটিংস</h2>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                    <p class="text-sm text-gray-500 mb-1">বর্তমানে: <span id="current-referrer-points" class="font-bold">লোড হচ্ছে...</span></p>
+                    <label for="referrer-points-input" class="block text-gray-700 font-semibold mb-2">রেফারকারীর পয়েন্ট:</label>
+                    <input type="number" id="referrer-points-input" class="search-input w-full text-center" placeholder="পয়েন্ট" min="0">
+                </div>
+                <div>
+                    <p class="text-sm text-gray-500 mb-1">বর্তমানে: <span id="current-referee-points" class="font-bold">লোড হচ্ছে...</span></p>
+                    <label for="referee-points-input" class="block text-gray-700 font-semibold mb-2">নতুন ইউজারের পয়েন্ট:</label>
+                    <input type="number" id="referee-points-input" class="search-input w-full text-center" placeholder="পয়েন্ট" min="0">
+                </div>
+            </div>
+            <div class="flex justify-end mt-6">
+                <button id="save-referral-points-btn" class="w-full sm:w-auto bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition">
+                    <i class="fas fa-save mr-2"></i> সেভ করুন
+                </button>
+            </div>
+        </div>
+        <!-- End of New Referral Settings -->
+
+        <div class="card">
+            <h2 class="text-2xl font-bold mb-4 text-blue-800">ব্যবহারকারীর তালিকা</h2>
+            <div class="mb-4">
+                <input type="text" id="user-search" class="search-input" placeholder="ব্যবহারকারী সার্চ করুন...">
+            </div>
+            <div class="table-container">
+                <table class="w-full">
+                    <thead>
+                        <tr>
+                            <th>UID</th>
+                            <th>নাম</th>
+                            <th>ইমেইল</th>
+                            <th>পয়েন্ট</th>
+                            <th>রেফার কোড</th>
+                            <th>সাইনআপ সময়</th>
+                        </tr>
+                    </thead>
+                    <tbody id="user-table-body">
+                        <tr>
+                            <td colspan="6" class="text-center py-4">লোড হচ্ছে...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tasks Tab -->
+    <div id="tasks-tab-content" class="tab-content">
+        <div class="card">
+            <div class="flex flex-col sm:flex-row justify-between items-center mb-4">
+                <h2 class="text-2xl font-bold text-blue-800">টাস্ক ম্যানেজমেন্ট</h2>
+                <button id="add-task-btn" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition mt-2 sm:mt-0">
+                    <i class="fas fa-plus mr-2"></i> নতুন টাস্ক যুক্ত করুন
+                </button>
+            </div>
+            <div class="table-container">
+                <table class="w-full">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>টাইটেল</th>
+                            <th>সাবমিশন</th>
+                            <th>সময়সীমা</th>
+                            <th>অ্যাকশন</th>
+                        </tr>
+                    </thead>
+                    <tbody id="task-table-body">
+                        <tr>
+                            <td colspan="5" class="text-center py-4">লোড হচ্ছে...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Submissions Tab -->
+    <div id="submissions-tab-content" class="tab-content">
+        <div class="card">
+            <h2 class="text-2xl font-bold mb-4 text-blue-800">সাবমিশন যাচাই করুন</h2>
+            <div class="flex flex-col sm:flex-row gap-4 mb-4">
+                <div class="relative w-full">
+                    <button id="submissions-filter-btn" class="w-full text-center sm:text-left bg-white border border-gray-300 rounded-lg px-4 py-2 flex justify-between items-center transition hover:bg-gray-50">
+                        <span>স্ট্যাটাস দ্বারা ফিল্টার করুন: সব</span>
+                        <i class="fas fa-chevron-down ml-2"></i>
+                    </button>
+                    <div id="submissions-filter-options" class="hidden absolute w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg z-10">
+                        <a href="#" class="block px-4 py-2 hover:bg-blue-100" data-filter="all">সব</a>
+                        <a href="#" class="block px-4 py-2 hover:bg-blue-100" data-filter="pending">Pending</a>
+                        <a href="#" class="block px-4 py-2 hover:bg-blue-100" data-filter="approved">Approved</a>
+                        <a href="#" class="block px-4 py-2 hover:bg-blue-100" data-filter="rejected">Rejected</a>
+                    </div>
+                </div>
+                <input type="text" id="submission-search" class="search-input" placeholder="ইউজার আইডি বা টাস্ক আইডি দিয়ে সার্চ করুন...">
+            </div>
+            <div class="table-container">
+                <table class="w-full">
+                    <thead>
+                        <tr>
+                            <th>সাবমিশন ID</th>
+                            <th>টাস্ক ID</th>
+                            <th>ইউজার ID</th>
+                            <th>সাবমিটেড সময়</th>
+                            <th>স্ট্যাটাস</th>
+                            <th>অ্যাকশন</th>
+                        </tr>
+                    </thead>
+                    <tbody id="submission-table-body">
+                        <tr>
+                            <td colspan="6" class="text-center py-4">লোড হচ্ছে...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Orders Tab -->
+    <div id="orders-tab-content" class="tab-content">
+        <div class="card">
+            <h2 class="text-2xl font-bold mb-4 text-blue-800">অর্ডার ম্যানেজমেন্ট</h2>
+            <div class="flex flex-col sm:flex-row gap-4 mb-4">
+                <div class="relative w-full">
+                    <button id="orders-filter-btn" class="w-full text-center sm:text-left bg-white border border-gray-300 rounded-lg px-4 py-2 flex justify-between items-center transition hover:bg-gray-50">
+                        <span>স্ট্যাটাস দ্বারা ফিল্টার করুন: সব</span>
+                        <i class="fas fa-chevron-down ml-2"></i>
+                    </button>
+                    <div id="orders-filter-options" class="hidden absolute w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg z-10">
+                        <a href="#" class="block px-4 py-2 hover:bg-blue-100" data-filter="all">সব</a>
+                        <a href="#" class="block px-4 py-2 hover:bg-blue-100" data-filter="pending">Pending</a>
+                        <a href="#" class="block px-4 py-2 hover:bg-blue-100" data-filter="processing">Processing</a>
+                        <a href="#" class="block px-4 py-2 hover:bg-blue-100" data-filter="completed">Completed</a>
+                    </div>
+                </div>
+                <input type="text" id="order-search" class="search-input" placeholder="অর্ডার আইডি বা ইউজার আইডি দিয়ে সার্চ করুন...">
+            </div>
+            <div class="table-container">
+                <table class="w-full">
+                    <thead>
+                        <tr>
+                            <th>অর্ডার ID</th>
+                            <th>প্ল্যাটফর্ম</th>
+                            <th>ক্যাটাগরি</th>
+                            <th>টার্গেট</th>
+                            <th>জমা দেওয়ার সময়</th>
+                            <th>স্ট্যাটাস</th>
+                            <th>অ্যাকশন</th>
+                        </tr>
+                    </thead>
+                    <tbody id="order-table-body">
+                        <tr>
+                            <td colspan="7" class="text-center py-4">লোড হচ্ছে...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    
+    <!-- NEW: Promotions Tab -->
+    <div id="promotions-tab-content" class="tab-content">
+        <div class="card">
+            <div class="flex flex-col sm:flex-row justify-between items-center mb-4">
+                <h2 class="text-2xl font-bold text-blue-800">প্রমোশন ব্যানার ম্যানেজমেন্ট</h2>
+                <button id="add-promo-btn" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition mt-2 sm:mt-0">
+                    <i class="fas fa-plus mr-2"></i> নতুন ব্যানার যুক্ত করুন
+                </button>
+            </div>
+            <div class="table-container">
+                <table class="w-full">
+                    <thead>
+                        <tr>
+                            <th>ছবি</th>
+                            <th>পুনঃনির্দেশ লিংক</th>
+                            <th>স্ট্যাটাস</th>
+                            <th>অ্যাকশন</th>
+                        </tr>
+                    </thead>
+                    <tbody id="promo-table-body">
+                        <tr>
+                            <td colspan="4" class="text-center py-4">লোড হচ্ছে...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modals -->
+
+<!-- View Submission Modal -->
+<div id="view-submission-modal" class="modal-overlay">
+    <div class="modal-content">
+        <div class="flex justify-between items-center border-b pb-4 mb-4">
+            <h3 class="text-2xl font-bold text-blue-800">সাবমিশন দেখুন</h3>
+            <button class="text-gray-500 hover:text-gray-800 text-2xl" id="close-view-modal">&times;</button>
+        </div>
+        <div class="space-y-4">
+            <div id="modal-image-container">
+                <img id="modal-image" class="w-full rounded-lg shadow-lg" alt="Submission Image">
+            </div>
+            <div>
+                <p class="font-semibold text-gray-700">জমা দেওয়া টেক্সট:</p>
+                <p id="modal-text" class="text-gray-600 border rounded-md p-2 mt-1 min-h-[50px]"></p>
+            </div>
+            <div>
+                <p class="font-semibold text-gray-700">ইউজার:</p>
+                <p id="modal-user-id" class="text-gray-600 mt-1"></p>
+            </div>
+            <div>
+                <p class="font-semibold text-gray-700">টাস্ক:</p>
+                <p id="modal-task-id" class="text-gray-600 mt-1"></p>
+            </div>
+        </div>
+        <div class="flex justify-end space-x-4 mt-6" id="submission-modal-actions">
+            <!-- Action buttons will be rendered here based on status -->
+        </div>
+    </div>
+</div>
+
+<!-- Rejection Reason Modal -->
+<div id="rejection-modal" class="modal-overlay">
+    <div class="modal-content">
+        <div class="flex justify-between items-center border-b pb-4 mb-4">
+            <h3 class="text-2xl font-bold text-blue-800">বাতিল করার কারণ</h3>
+            <button class="text-gray-500 hover:text-gray-800 text-2xl" id="close-rejection-modal">&times;</button>
+        </div>
+        <div class="space-y-4">
+            <textarea id="reject-reason-input" rows="4" placeholder="বাতিল করার কারণ লিখুন..." class="reject-reason-input"></textarea>
+            <button class="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-3 rounded-md transition" id="confirm-reject-btn">
+                বাতিল নিশ্চিত করুন
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Add/Edit Task Modal -->
+<div id="task-modal" class="modal-overlay">
+    <div class="modal-content">
+        <div class="flex justify-between items-center border-b pb-4 mb-4">
+            <h3 class="text-2xl font-bold text-blue-800" id="task-modal-title">নতুন টাস্ক যুক্ত করুন</h3>
+            <button class="text-gray-500 hover:text-gray-800 text-2xl" id="close-task-modal">&times;</button>
+        </div>
+        <form id="task-form" class="space-y-4">
+            <div>
+                <label class="block text-gray-700 font-semibold mb-2" for="task-title">টাইটেল</label>
+                <input type="text" id="task-title" name="title" class="w-full px-4 py-2 border rounded-md" required>
+            </div>
+            <div>
+                <label class="block text-gray-700 font-semibold mb-2" for="task-description">বর্ণনা</label>
+                <textarea id="task-description" name="description" rows="4" class="w-full px-4 py-2 border rounded-md resize-none" required></textarea>
+            </div>
+            <div>
+                <label class="block text-gray-700 font-semibold mb-2" for="task-category">ক্যাটাগরি</label>
+                <input type="text" id="task-category" name="category" class="w-full px-4 py-2 border rounded-md" required>
+            </div>
+            <div>
+                <label class="block text-gray-700 font-semibold mb-2" for="task-target">টার্গেট</label>
+                <input type="text" id="task-target" name="target" class="w-full px-4 py-2 border rounded-md" required>
+            </div>
+            <div>
+                <label class="block text-gray-700 font-semibold mb-2" for="task-deadline">সময়সীমা (ঐচ্ছিক)</label>
+                <input type="text" id="task-deadline" name="deadline" class="w-full px-4 py-2 border rounded-md">
+            </div>
+            <div>
+                <label class="block text-gray-700 font-semibold mb-2" for="task-points">পয়েন্ট</label>
+                <input type="number" id="task-points" name="points" class="w-full px-4 py-2 border rounded-md" required>
+            </div>
+            <div>
+                <label class="block text-gray-700 font-semibold mb-2" for="task-how-to-complete">কিভাবে সম্পন্ন করবেন</label>
+                <textarea id="task-how-to-complete" name="howToComplete" rows="4" class="w-full px-4 py-2 border rounded-md resize-none" required></textarea>
+            </div>
+            <div>
+                <label class="block text-gray-700 font-semibold mb-2" for="task-channel-logo">চ্যানেল/লোগো URL</label>
+                <input type="url" id="task-channel-logo" name="channelLogo" class="w-full px-4 py-2 border rounded-md">
+            </div>
+            <button type="submit" class="w-full bg-blue-600 text-white font-bold py-3 rounded-md hover:bg-blue-700 transition">
+                সেভ করুন
+            </button>
+        </form>
+    </div>
+</div>
+
+<!-- Order View Modal -->
+<div id="view-order-modal" class="modal-overlay">
+    <div class="modal-content">
+        <div class="flex justify-between items-center border-b pb-4 mb-4">
+            <h3 class="text-2xl font-bold text-blue-800">অর্ডার দেখুন</h3>
+            <button class="text-gray-500 hover:text-gray-800 text-2xl" id="close-order-modal">&times;</button>
+        </div>
+        <div class="space-y-4">
+            <div>
+                <p class="font-semibold text-gray-700">ইউজার ID:</p>
+                <p id="order-modal-user-id" class="text-gray-600 mt-1"></p>
+            </div>
+            <div>
+                <p class="font-semibold text-gray-700">প্ল্যাটফর্ম:</p>
+                <p id="order-modal-platform" class="text-gray-600 mt-1"></p>
+            </div>
+            <div>
+                <p class="font-semibold text-gray-700">ক্যাটাগরি:</p>
+                <p id="order-modal-category" class="text-gray-600 mt-1"></p>
+            </div>
+            <div>
+                <p class="font-semibold text-gray-700">টাইটেল:</p>
+                <p id="order-modal-title" class="text-gray-600 mt-1"></p>
+            </div>
+            <div>
+                <p class="font-semibold text-gray-700">বর্ণনা:</p>
+                <p id="order-modal-description" class="text-gray-600 mt-1"></p>
+            </div>
+            <div>
+                <p class="font-semibold text-gray-700">টার্গেট:</p>
+                <p id="order-modal-target" class="text-gray-600 mt-1"></p>
+            </div>
+            <div>
+                <p class="font-semibold text-gray-700">লিংক:</p>
+                <a id="order-modal-link" href="#" target="_blank" class="text-blue-600 hover:underline break-all">লিংক দেখুন</a>
+            </div>
+        </div>
+        <div class="flex justify-end space-x-4 mt-6">
+            <button class="approve-btn action-button" data-order-id="" id="order-modal-approve-btn">অনুমোদন করুন</button>
+            <button class="reject-btn action-button" data-order-id="" id="order-modal-reject-btn">বাতিল করুন</button>
+        </div>
+    </div>
+</div>
+
+<!-- NEW: Add/Edit Promo Banner Modal -->
+<div id="promo-modal" class="modal-overlay">
+    <div class="modal-content">
+        <div class="flex justify-between items-center border-b pb-4 mb-4">
+            <h3 class="text-2xl font-bold text-blue-800" id="promo-modal-title">নতুন ব্যানার যুক্ত করুন</h3>
+            <button class="text-gray-500 hover:text-gray-800 text-2xl" id="close-promo-modal">&times;</button>
+        </div>
+        <form id="promo-form" class="space-y-4">
+            <div>
+                <label class="block text-gray-700 font-semibold mb-2" for="promo-image-url">ছবির URL</label>
+                <input type="url" id="promo-image-url" name="imageUrl" class="w-full px-4 py-2 border rounded-md" required>
+            </div>
+            <div>
+                <label class="block text-gray-700 font-semibold mb-2" for="promo-redirect-link">পুনঃনির্দেশ লিংক</label>
+                <input type="url" id="promo-redirect-link" name="redirectLink" class="w-full px-4 py-2 border rounded-md" required>
+            </div>
+            <button type="submit" class="w-full bg-blue-600 text-white font-bold py-3 rounded-md hover:bg-blue-700 transition">
+                সেভ করুন
+            </button>
+        </form>
+    </div>
+</div>
+
+<script type="module">
+    // Firebase Modular SDK-এর জন্য মডিউল আমদানি
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-app.js";
+    import { getDatabase, ref, get, child, onValue, update, remove, set, push } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-database.js";
+    import { getAuth, onAuthStateChanged, signInAnonymously } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-auth.js";
+
+    // Firebase কনফিগারেশন
+    const firebaseConfig = {
+        apiKey: "AIzaSyAC4h55aA0Zz--V5ejyndzR5WC_-9rAPio",
+        authDomain: "subscribe-bot-6f9b2.firebaseapp.com",
+        databaseURL: "https://subscribe-bot-6f9b2-default-rtdb.firebaseio.com",
+        projectId: "subscribe-bot-6f9b2",
+        storageBucket: "subscribe-bot-6f9b2.firebasestorage.app",
+        messagingSenderId: "141787931031",
+        appId: "1:141787931031:web:2108a3e930f5ce4fbc64d2",
+        measurementId: "G-HSDKCJB14Y"
+    };
+
+    // Firebase অ্যাপ ইনিশিয়ালাইজ করুন
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
+    const auth = getAuth(app);
+
+    // DOM উপাদানগুলো ধরুন
+    const userTableBody = document.getElementById('user-table-body');
+    const taskTableBody = document.getElementById('task-table-body');
+    const submissionTableBody = document.getElementById('submission-table-body');
+    const orderTableBody = document.getElementById('order-table-body');
+    // NEW: Promo Table Body
+    const promoTableBody = document.getElementById('promo-table-body');
+    
+    // Tab Buttons
+    const usersTabBtn = document.getElementById('users-tab-btn');
+    const tasksTabBtn = document.getElementById('tasks-tab-btn');
+    const submissionsTabBtn = document.getElementById('submissions-tab-btn');
+    const ordersTabBtn = document.getElementById('orders-tab-btn');
+    // NEW: Promo Tab Button
+    const promotionsTabBtn = document.getElementById('promotions-tab-btn');
+
+    // Tab Contents
+    const usersTabContent = document.getElementById('users-tab-content');
+    const tasksTabContent = document.getElementById('tasks-tab-content');
+    const submissionsTabContent = document.getElementById('submissions-tab-content');
+    const ordersTabContent = document.getElementById('orders-tab-content');
+    // NEW: Promo Tab Content
+    const promotionsTabContent = document.getElementById('promotions-tab-content');
+
+    const addTaskBtn = document.getElementById('add-task-btn');
+    const taskModal = document.getElementById('task-modal');
+    const closeTaskModalBtn = document.getElementById('close-task-modal');
+    const taskForm = document.getElementById('task-form');
+    const viewSubmissionModal = document.getElementById('view-submission-modal');
+    const closeViewModalBtn = document.getElementById('close-view-modal');
+    const modalImage = document.getElementById('modal-image');
+    const modalText = document.getElementById('modal-text');
+    const modalUserId = document.getElementById('modal-user-id');
+    const modalTaskId = document.getElementById('modal-task-id');
+    const submissionModalActions = document.getElementById('submission-modal-actions');
+    const rejectionModal = document.getElementById('rejection-modal');
+    const closeRejectionModalBtn = document.getElementById('close-rejection-modal');
+    const rejectReasonInput = document.getElementById('reject-reason-input');
+    const confirmRejectBtn = document.getElementById('confirm-reject-btn');
+    const submissionsFilterBtn = document.getElementById('submissions-filter-btn');
+    const submissionsFilterOptions = document.getElementById('submissions-filter-options');
+    const ordersFilterBtn = document.getElementById('orders-filter-btn');
+    const ordersFilterOptions = document.getElementById('orders-filter-options');
+    const userSearchInput = document.getElementById('user-search');
+    const submissionSearchInput = document.getElementById('submission-search');
+    const orderSearchInput = document.getElementById('order-search');
+    
+    // Order View Modal
+    const viewOrderModal = document.getElementById('view-order-modal');
+    const closeOrderModalBtn = document.getElementById('close-order-modal');
+    const orderModalUserId = document.getElementById('order-modal-user-id');
+    const orderModalPlatform = document.getElementById('order-modal-platform');
+    const orderModalCategory = document.getElementById('order-modal-category');
+    const orderModalTitle = document.getElementById('order-modal-title');
+    const orderModalDescription = document.getElementById('order-modal-description');
+    const orderModalTarget = document.getElementById('order-modal-target');
+    const orderModalLink = document.getElementById('order-modal-link');
+    const orderModalApproveBtn = document.getElementById('order-modal-approve-btn');
+    const orderModalRejectBtn = document.getElementById('order-modal-reject-btn');
+
+    // NEW: Promo Modal
+    const addPromoBtn = document.getElementById('add-promo-btn');
+    const promoModal = document.getElementById('promo-modal');
+    const closePromoModalBtn = document.getElementById('close-promo-modal');
+    const promoForm = document.getElementById('promo-form');
+    let currentPromoId = null;
+
+    let currentSubmissionId = null;
+    let currentUserIdForSubmission = null;
+    let currentTaskIdForSubmission = null;
+    let currentFilteredSubmissions = [];
+    let currentFilteredOrders = [];
+    let currentPromos = [];
+
+    // --- নতুন উন্নত রেফারেল সিস্টেমের জন্য DOM উপাদান এবং ফাংশন ---
+    const referrerPointsInput = document.getElementById('referrer-points-input');
+    const refereePointsInput = document.getElementById('referee-points-input');
+    const saveReferralPointsBtn = document.getElementById('save-referral-points-btn');
+    const currentReferrerPointsSpan = document.getElementById('current-referrer-points');
+    const currentRefereePointsSpan = document.getElementById('current-referee-points');
+
+    // রেফারেল পয়েন্টের মান লোড করুন
+    async function loadReferralPoints() {
+        // নতুন স্প্যানগুলোকে "লোড হচ্ছে..." টেক্সট দিয়ে ইনিশিয়ালাইজ করুন
+        currentReferrerPointsSpan.textContent = 'লোড হচ্ছে...';
+        currentRefereePointsSpan.textContent = 'লোড হচ্ছে...';
+
+        const referralRef = ref(db, 'settings/referralPoints');
+        try {
+            const snapshot = await get(referralRef);
+            if (snapshot.exists()) {
+                const points = snapshot.val();
+                referrerPointsInput.value = points.referrer || 0;
+                refereePointsInput.value = points.referee || 0;
+                currentReferrerPointsSpan.textContent = points.referrer || 0;
+                currentRefereePointsSpan.textContent = points.referee || 0;
+            } else {
+                referrerPointsInput.value = 5; // ডিফল্ট মান
+                refereePointsInput.value = 5;  // ডিফল্ট মান
+                currentReferrerPointsSpan.textContent = 5;
+                currentRefereePointsSpan.textContent = 5;
+            }
+        } catch (error) {
+            console.error('রেফারেল পয়েন্ট লোড করতে ব্যর্থ:', error);
+            referrerPointsInput.value = 5; // ত্রুটি হলে ডিফল্ট মান
+            refereePointsInput.value = 5;  // ত্রুটি হলে ডিফল্ট মান
+            currentReferrerPointsSpan.textContent = 'ত্রুটি';
+            currentRefereePointsSpan.textContent = 'ত্রুটি';
+        }
+    }
+
+    // রেফারেল পয়েন্টের মান সেভ করুন
+    async function saveReferralPoints() {
+        const referrerPoints = parseInt(referrerPointsInput.value);
+        const refereePoints = parseInt(refereePointsInput.value);
+
+        if (isNaN(referrerPoints) || referrerPoints < 0 || isNaN(refereePoints) || refereePoints < 0) {
+            alert('অনুগ্রহ করে রেফারকারীর এবং নতুন ইউজারের জন্য বৈধ সংখ্যা দিন।');
+            return;
+        }
+        
+        const referralData = {
+            referrer: referrerPoints,
+            referee: refereePoints
+        };
+
+        try {
+            await set(ref(db, 'settings/referralPoints'), referralData);
+            alert('রেফারেল পয়েন্ট সফলভাবে আপডেট হয়েছে।');
+            // সফল হলে বর্তমান মানগুলোও আপডেট করুন
+            currentReferrerPointsSpan.textContent = referrerPoints;
+            currentRefereePointsSpan.textContent = refereePoints;
+        } catch (error) {
+            console.error('রেফারেল পয়েন্ট আপডেট করতে ব্যর্থ:', error);
+            alert('আপডেট করতে একটি ত্রুটি হয়েছে।');
+        }
+    }
+    
+    // সেভ বাটনে ইভেন্ট লিসেনার যুক্ত করুন
+    saveReferralPointsBtn.addEventListener('click', saveReferralPoints);
+    
+    // ইউটিলিটি ফাংশন
+    function esc(str = "") {
+        return String(str)
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;");
+    }
+
+    function formatDate(timestamp) {
+        if (!timestamp) return 'N/A';
+        const date = new Date(timestamp);
+        return date.toLocaleDateString('bn-BD', {
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric'
+        });
+    }
+    
+    function formatDateTime(timestamp) {
+        if (!timestamp) return 'N/A';
+        const date = new Date(timestamp);
+        return date.toLocaleDateString('bn-BD') + ', ' + date.toLocaleTimeString('bn-BD');
+    }
+
+    // --- ট্যাগ/স্ট্যাটাস কালার ফাংশন ---
+    function getStatusTag(status) {
+        let colorClass = '';
+        let text = '';
+        switch (status) {
+            case 'pending':
+                colorClass = 'bg-yellow-200 text-yellow-800';
+                text = 'Pending';
+                break;
+            case 'approved':
+                colorClass = 'bg-green-200 text-green-800';
+                text = 'Approved';
+                break;
+            case 'rejected':
+                colorClass = 'bg-red-200 text-red-800';
+                text = 'Rejected';
+                break;
+            case 'processing':
+                colorClass = 'bg-blue-200 text-blue-800';
+                text = 'Processing';
+                break;
+            case 'completed':
+                colorClass = 'bg-green-200 text-green-800';
+                text = 'Completed';
+                break;
+            case true:
+                colorClass = 'bg-green-200 text-green-800';
+                text = 'সক্রিয়';
+                break;
+            case false:
+                colorClass = 'bg-red-200 text-red-800';
+                text = 'নিষ্ক্রিয়';
+                break;
+            default:
+                colorClass = 'bg-gray-200 text-gray-800';
+                text = status;
+        }
+        return `<span class="px-2 py-1 rounded-full text-xs font-semibold ${colorClass}">${esc(text)}</span>`;
+    }
+
+    // --- ডেটা লোড করার ফাংশন ---
+    async function loadUsers() {
+        userTableBody.innerHTML = `<tr><td colspan="6" data-label="লোড হচ্ছে..." class="text-center py-4"><i class="fas fa-spinner fa-spin mr-2"></i> লোড হচ্ছে...</td></tr>`;
+        const usersRef = ref(db, 'users');
+        onValue(usersRef, (snapshot) => {
+            userTableBody.innerHTML = '';
+            if (snapshot.exists()) {
+                let users = Object.entries(snapshot.val()).map(([uid, data]) => ({ uid, ...data }));
+                users.sort((a, b) => (b.points || 0) - (a.points || 0)); // Sort by points
+
+                const searchTerm = userSearchInput.value.toLowerCase();
+                const filteredUsers = users.filter(user => 
+                    user.uid.toLowerCase().includes(searchTerm) ||
+                    (user.displayName && user.displayName.toLowerCase().includes(searchTerm)) ||
+                    (user.email && user.email.toLowerCase().includes(searchTerm)) ||
+                    (user.referralCode && user.referralCode.toLowerCase().includes(searchTerm))
+                );
+
+                if (filteredUsers.length === 0) {
+                     userTableBody.innerHTML = `<tr><td colspan="6" data-label="কোনো ব্যবহারকারী নেই।" class="text-center py-4">কোনো ব্যবহারকারী পাওয়া যায়নি।</td></tr>`;
+                     return;
+                }
+
+                filteredUsers.forEach(user => {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td data-label="UID" class="px-4 py-2 text-xs break-all">${esc(user.uid)}</td>
+                        <td data-label="নাম" class="px-4 py-2">${esc(user.displayName || 'N/A')}</td>
+                        <td data-label="ইমেইল" class="px-4 py-2">${esc(user.email || 'N/A')}</td>
+                        <td data-label="পয়েন্ট" class="px-4 py-2 font-semibold text-blue-700">${esc(user.points || 0)}</td>
+                        <td data-label="রেফার কোড" class="px-4 py-2">${esc(user.referralCode || 'N/A')}</td>
+                        <td data-label="সাইনআপ সময়" class="px-4 py-2">${formatDate(user.createdAt ? new Date(user.createdAt).getTime() : null)}</td>
+                    `;
+                    userTableBody.appendChild(row);
+                });
+            } else {
+                userTableBody.innerHTML = `<tr><td colspan="6" data-label="কোনো ব্যবহারকারী নেই।" class="text-center py-4">কোনো ব্যবহারকারী নেই।</td></tr>`;
+            }
+        }, { onlyOnce: false }); // Realtime listener
+    }
+    userSearchInput.addEventListener('input', loadUsers);
+
+    async function loadTasks() {
+        taskTableBody.innerHTML = `<tr><td colspan="5" data-label="লোড হচ্ছে..." class="text-center py-4"><i class="fas fa-spinner fa-spin mr-2"></i> লোড হচ্ছে...</td></tr>`;
+        const tasksRef = ref(db, 'tasks');
+        onValue(tasksRef, async (snapshot) => {
+            taskTableBody.innerHTML = '';
+            if (snapshot.exists()) {
+                const tasks = Object.entries(snapshot.val()).map(([id, data]) => ({ id, ...data }));
+                
+                const taskPromises = tasks.map(async (task) => {
+                    return new Promise((resolve, reject) => {
+                         const submissionsRef = ref(db, 'submissions');
+                         onValue(submissionsRef, (subSnapshot) => {
+                              let submissionCount = 0;
+                              if (subSnapshot.exists()) {
+                                   subSnapshot.forEach(userSubmissions => {
+                                        if (userSubmissions.child(task.id).exists()) {
+                                             submissionCount += Object.keys(userSubmissions.child(task.id).val()).length;
+                                        }
+                                   });
+                              }
+                              resolve({ ...task, submissionCount });
+                         }, { onlyOnce: true });
+                    });
+                });
+
+                const tasksWithCounts = await Promise.all(taskPromises);
+
+                tasksWithCounts.forEach(task => {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td data-label="ID" class="px-4 py-2 text-xs break-all">${esc(task.id)}</td>
+                        <td data-label="টাইটেল" class="px-4 py-2 font-semibold">${esc(task.title || 'N/A')}</td>
+                        <td data-label="সাবমিশন" class="px-4 py-2 text-center">${esc(task.submissionCount || 0)}</td>
+                        <td data-label="সময়সীমা" class="px-4 py-2">${esc(task.deadline || 'N/A')}</td>
+                        <td data-label="অ্যাকশন" class="px-4 py-2 flex space-x-2">
+                            <button class="bg-blue-600 text-white px-3 py-1 rounded-md text-sm hover:bg-blue-700 edit-task-btn" data-id="${esc(task.id)}">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                            <button class="bg-red-600 text-white px-3 py-1 rounded-md text-sm hover:bg-red-700 delete-task-btn" data-id="${esc(task.id)}">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </td>
+                    `;
+                    taskTableBody.appendChild(row);
+                });
+
+                // Edit/Delete button listeners
+                document.querySelectorAll('.edit-task-btn').forEach(btn => {
+                    btn.addEventListener('click', () => editTask(btn.dataset.id));
+                });
+                document.querySelectorAll('.delete-task-btn').forEach(btn => {
+                    btn.addEventListener('click', () => deleteTask(btn.dataset.id));
+                });
+
+            } else {
+                taskTableBody.innerHTML = `<tr><td colspan="5" data-label="কোনো টাস্ক নেই।" class="text-center py-4">কোনো টাস্ক নেই।</td></tr>`;
+            }
+        }, { onlyOnce: false }); // Realtime listener
+    }
+    
+    async function loadSubmissions(filter = 'all', searchTerm = '') {
+        submissionTableBody.innerHTML = `<tr><td colspan="6" data-label="লোড হচ্ছে..." class="text-center py-4"><i class="fas fa-spinner fa-spin mr-2"></i> লোড হচ্ছে...</td></tr>`;
+        const submissionsRef = ref(db, 'submissions');
+        
+        onValue(submissionsRef, async (snapshot) => {
+            submissionTableBody.innerHTML = '';
+            let allSubmissions = [];
+            if (snapshot.exists()) {
+                snapshot.forEach(userSubmissions => {
+                    const userId = userSubmissions.key;
+                    userSubmissions.forEach(taskSubmissions => {
+                        const taskId = taskSubmissions.key;
+                        taskSubmissions.forEach(submission => {
+                            allSubmissions.push({
+                                id: submission.key,
+                                userId,
+                                taskId,
+                                ...submission.val()
+                            });
+                        });
+                    });
+                });
+            }
+
+            // Filter submissions based on status and search term
+            const filtered = allSubmissions.filter(sub => {
+                const statusMatch = filter === 'all' || sub.status === filter;
+                const searchMatch = !searchTerm || sub.id.toLowerCase().includes(searchTerm.toLowerCase()) || sub.userId.toLowerCase().includes(searchTerm.toLowerCase()) || sub.taskId.toLowerCase().includes(searchTerm.toLowerCase());
+                return statusMatch && searchMatch;
+            }).sort((a, b) => b.timestamp - a.timestamp); // Sort by newest first
+
+            currentFilteredSubmissions = filtered; // Store filtered submissions for modal actions
+
+            if (filtered.length === 0) {
+                submissionTableBody.innerHTML = `<tr><td colspan="6" data-label="কোনো সাবমিশন নেই।" class="text-center py-4">কোনো সাবমিশন পাওয়া যায়নি।</td></tr>`;
+            } else {
+                filtered.forEach(submission => {
+                    const row = document.createElement('tr');
+                    
+                    row.innerHTML = `
+                        <td data-label="সাবমিশন ID" class="px-4 py-2 text-xs break-all">${esc(submission.id)}</td>
+                        <td data-label="টাস্ক ID" class="px-4 py-2 text-xs break-all">${esc(submission.taskId)}</td>
+                        <td data-label="ইউজার ID" class="px-4 py-2 text-xs break-all">${esc(submission.userId)}</td>
+                        <td data-label="সাবমিটেড সময়" class="px-4 py-2">${formatDate(submission.timestamp)}</td>
+                        <td data-label="স্ট্যাটাস" class="px-4 py-2">${getStatusTag(submission.status)}</td>
+                        <td data-label="অ্যাকশন" class="px-4 py-2 flex space-x-2">
+                             <button class="bg-blue-600 text-white px-3 py-1 rounded-md text-sm hover:bg-blue-700 view-submission-btn" data-id="${esc(submission.id)}" data-user-id="${esc(submission.userId)}" data-task-id="${esc(submission.taskId)}">
+                                 <i class="fas fa-eye"></i>
+                             </button>
+                            ${submission.status === 'pending' ? `
+                                <button class="bg-green-600 text-white px-3 py-1 rounded-md text-sm hover:bg-green-700 approve-submission-btn" data-id="${esc(submission.id)}" data-user-id="${esc(submission.userId)}" data-task-id="${esc(submission.taskId)}">
+                                    <i class="fas fa-check"></i>
+                                </button>
+                                <button class="bg-red-600 text-white px-3 py-1 rounded-md text-sm hover:bg-red-700 reject-submission-btn" data-id="${esc(submission.id)}" data-user-id="${esc(submission.userId)}" data-task-id="${esc(submission.taskId)}">
+                                    <i class="fas fa-times"></i>
+                                </button>
+                            ` : ''}
+                        </td>
+                    `;
+                    submissionTableBody.appendChild(row);
+                });
+            }
+
+            // View submission button listener
+            document.querySelectorAll('.view-submission-btn').forEach(btn => {
+                btn.addEventListener('click', () => showSubmissionModal(btn.dataset.id, btn.dataset.userId, btn.dataset.taskId));
+            });
+            // Approve/Reject button listeners
+            document.querySelectorAll('.approve-submission-btn').forEach(btn => {
+                btn.addEventListener('click', () => approveSubmission(btn.dataset.id));
+            });
+            document.querySelectorAll('.reject-submission-btn').forEach(btn => {
+                currentSubmissionId = btn.dataset.id;
+                openModal(rejectionModal);
+            });
+        }, { onlyOnce: false }); // Realtime listener
+    }
+    submissionSearchInput.addEventListener('input', () => loadSubmissions(submissionsFilterBtn.dataset.filterStatus, submissionSearchInput.value));
+
+    async function loadOrders(filter = 'all', searchTerm = '') {
+        orderTableBody.innerHTML = `<tr><td colspan="7" data-label="লোড হচ্ছে..." class="text-center py-4"><i class="fas fa-spinner fa-spin mr-2"></i> লোড হচ্ছে...</td></tr>`;
+        const ordersRef = ref(db, 'orders');
+        
+        onValue(ordersRef, (snapshot) => {
+            orderTableBody.innerHTML = '';
+            let allOrders = [];
+            if (snapshot.exists()) {
+                allOrders = Object.entries(snapshot.val()).map(([id, data]) => ({ id, ...data }));
+            }
+
+            const filtered = allOrders.filter(order => {
+                const statusMatch = filter === 'all' || order.status === filter;
+                const searchMatch = !searchTerm || order.id.toLowerCase().includes(searchTerm.toLowerCase()) || order.userId.toLowerCase().includes(searchTerm.toLowerCase());
+                return statusMatch && searchMatch;
+            }).sort((a, b) => b.timestamp - a.timestamp); // Sort by newest first
+
+            currentFilteredOrders = filtered;
+
+            if (filtered.length === 0) {
+                orderTableBody.innerHTML = `<tr><td colspan="7" data-label="কোনো অর্ডার নেই।" class="text-center py-4">কোনো অর্ডার পাওয়া যায়নি।</td></tr>`;
+            } else {
+                filtered.forEach(order => {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td data-label="অর্ডার ID" class="px-4 py-2 text-xs break-all">${esc(order.id)}</td>
+                        <td data-label="প্ল্যাটফর্ম" class="px-4 py-2">${esc(order.platform || 'N/A')}</td>
+                        <td data-label="ক্যাটাগরি" class="px-4 py-2">${esc(order.category || 'N/A')}</td>
+                        <td data-label="টার্গেট" class="px-4 py-2">${esc(order.target || 'N/A')}</td>
+                        <td data-label="জমা দেওয়ার সময়" class="px-4 py-2">${formatDate(order.timestamp)}</td>
+                        <td data-label="স্ট্যাটাস" class="px-4 py-2">${getStatusTag(order.status)}</td>
+                        <td data-label="অ্যাকশন" class="px-4 py-2 flex space-x-2">
+                            <button class="bg-blue-600 text-white px-3 py-1 rounded-md text-sm hover:bg-blue-700 view-order-btn" data-id="${esc(order.id)}">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                            ${order.status === 'pending' ? `
+                                <button class="bg-green-600 text-white px-3 py-1 rounded-md text-sm hover:bg-green-700 approve-order-btn" data-id="${esc(order.id)}">
+                                    <i class="fas fa-check"></i>
+                                </button>
+                                <button class="bg-red-600 text-white px-3 py-1 rounded-md text-sm hover:bg-red-700 reject-order-btn" data-id="${esc(order.id)}">
+                                    <i class="fas fa-times"></i>
+                                </button>
+                            ` : ''}
+                        </td>
+                    `;
+                    orderTableBody.appendChild(row);
+                });
+            }
+            document.querySelectorAll('.view-order-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => showOrderModal(e.target.dataset.id));
+            });
+            document.querySelectorAll('.approve-order-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => approveOrder(e.target.dataset.id));
+            });
+            document.querySelectorAll('.reject-order-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => rejectOrder(e.target.dataset.id));
+            });
+        }, { onlyOnce: false });
+    }
+    orderSearchInput.addEventListener('input', () => loadOrders(ordersFilterBtn.dataset.filterStatus, orderSearchInput.value));
+
+    // --- NEW: Promo Banners Functions ---
+    async function loadPromos() {
+        promoTableBody.innerHTML = `<tr><td colspan="4" data-label="লোড হচ্ছে..." class="text-center py-4"><i class="fas fa-spinner fa-spin mr-2"></i> লোড হচ্ছে...</td></tr>`;
+        const promosRef = ref(db, 'promotions');
+        onValue(promosRef, (snapshot) => {
+            promoTableBody.innerHTML = '';
+            let promos = [];
+            if (snapshot.exists()) {
+                promos = Object.entries(snapshot.val()).map(([id, data]) => ({ id, ...data }));
+                promos.sort((a, b) => b.timestamp - a.timestamp);
+            }
+            currentPromos = promos;
+
+            if (promos.length === 0) {
+                promoTableBody.innerHTML = `<tr><td colspan="4" data-label="কোনো ব্যানার নেই।" class="text-center py-4">কোনো প্রমোশন ব্যানার পাওয়া যায়নি।</td></tr>`;
+            } else {
+                promos.forEach(promo => {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td data-label="ছবি" class="px-4 py-2">
+                            <img src="${esc(promo.imageUrl || 'https://via.placeholder.com/100x50')}" class="w-24 h-12 object-cover rounded-md" alt="Promo Banner">
+                        </td>
+                        <td data-label="পুনঃনির্দেশ লিংক" class="px-4 py-2 text-xs break-all">${esc(promo.redirectLink || 'N/A')}</td>
+                        <td data-label="স্ট্যাটাস" class="px-4 py-2">${getStatusTag(promo.active)}</td>
+                        <td data-label="অ্যাকশন" class="px-4 py-2 flex space-x-2">
+                            <button class="bg-blue-600 text-white px-3 py-1 rounded-md text-sm hover:bg-blue-700 edit-promo-btn" data-id="${esc(promo.id)}">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                            ${promo.active ? `
+                            <button class="bg-red-600 text-white px-3 py-1 rounded-md text-sm hover:bg-red-700 deactivate-promo-btn" data-id="${esc(promo.id)}">
+                                <i class="fas fa-eye-slash"></i>
+                            </button>
+                            ` : `
+                            <button class="bg-green-600 text-white px-3 py-1 rounded-md text-sm hover:bg-green-700 activate-promo-btn" data-id="${esc(promo.id)}">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                            `}
+                            <button class="bg-gray-600 text-white px-3 py-1 rounded-md text-sm hover:bg-gray-700 delete-promo-btn" data-id="${esc(promo.id)}">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </td>
+                    `;
+                    promoTableBody.appendChild(row);
+                });
+
+                document.querySelectorAll('.edit-promo-btn').forEach(btn => {
+                    btn.addEventListener('click', () => editPromo(btn.dataset.id));
+                });
+                document.querySelectorAll('.activate-promo-btn').forEach(btn => {
+                    btn.addEventListener('click', () => togglePromoStatus(btn.dataset.id, true));
+                });
+                document.querySelectorAll('.deactivate-promo-btn').forEach(btn => {
+                    btn.addEventListener('click', () => togglePromoStatus(btn.dataset.id, false));
+                });
+                document.querySelectorAll('.delete-promo-btn').forEach(btn => {
+                    btn.addEventListener('click', () => deletePromo(btn.dataset.id));
+                });
+            }
+        }, { onlyOnce: false });
+    }
+
+    // --- Modal Functions ---
+    function openModal(modal) {
+        modal.style.display = 'flex';
+        document.body.style.overflow = 'hidden';
+    }
+    function closeModal(modal) {
+        modal.style.display = 'none';
+        document.body.style.overflow = '';
+    }
+
+    // --- Submission Actions ---
+    async function showSubmissionModal(submissionId, userId, taskId) {
+        const submissionRef = ref(db, `submissions/${userId}/${taskId}/${submissionId}`);
+        const snapshot = await get(submissionRef);
+        if (!snapshot.exists()) {
+            alert('সাবমিশনটি পাওয়া যায়নি।');
+            return;
+        }
+        const submissionData = snapshot.val();
+        modalImage.src = esc(submissionData.imageUrl);
+        modalText.textContent = esc(submissionData.submissionText || 'কোনো লেখা নেই।');
+        modalUserId.textContent = esc(userId);
+        modalTaskId.textContent = esc(taskId);
+        
+        // Dynamically create buttons based on status
+        submissionModalActions.innerHTML = '';
+        if (submissionData.status === 'pending') {
+             submissionModalActions.innerHTML = `
+                <button class="approve-btn action-button" data-submission-id="${esc(submissionId)}" id="modal-approve-btn">অনুমোদন করুন</button>
+                <button class="reject-btn action-button" data-submission-id="${esc(submissionId)}" id="modal-reject-btn">বাতিল করুন</button>
+             `;
+             document.getElementById('modal-approve-btn').addEventListener('click', () => approveSubmission(submissionId));
+             document.getElementById('modal-reject-btn').addEventListener('click', () => {
+                 currentSubmissionId = submissionId;
+                 openModal(rejectionModal);
+             });
+        }
+        
+        currentSubmissionId = submissionId;
+        currentUserIdForSubmission = userId;
+        currentTaskIdForSubmission = taskId;
+        openModal(viewSubmissionModal);
+    }
+    
+    async function approveSubmission(submissionId) {
+        const submission = currentFilteredSubmissions.find(sub => sub.id === submissionId);
+        if (!submission || submission.status !== 'pending') {
+            alert('এই সাবমিশনটি অনুমোদন করা যাবে না।');
+            return;
+        }
+
+        const adminId = auth.currentUser.uid;
+        const updates = {};
+        updates[`submissions/${submission.userId}/${submission.taskId}/${submission.id}/status`] = 'approved';
+        updates[`submissions/${submission.userId}/${submission.taskId}/${submission.id}/approvedBy`] = adminId;
+        
+        // assuming 10 points per approval and fetching current points
+        const currentPoints = (await get(ref(db, `users/${submission.userId}/points`))).val() || 0;
+        updates[`users/${submission.userId}/points`] = currentPoints + 10;
+
+        try {
+            await update(ref(db), updates);
+            closeModal(viewSubmissionModal);
+            alert('সাবমিশন সফলভাবে অনুমোদিত হয়েছে এবং ব্যবহারকারীকে ১০ পয়েন্ট দেওয়া হয়েছে।');
+        } catch (error) {
+            console.error("সাবমিশন অনুমোদন করতে ব্যর্থ:", error);
+            alert('সাবমিশন অনুমোদন করতে একটি ত্রুটি হয়েছে।');
+        }
+    }
+
+    async function rejectSubmission(submissionId, reason) {
+        const submission = currentFilteredSubmissions.find(sub => sub.id === submissionId);
+        if (!submission || submission.status !== 'pending') {
+            alert('এই সাবমিশনটি বাতিল করা যাবে না।');
+            return;
+        }
+        
+        const adminId = auth.currentUser.uid;
+        const updates = {};
+        updates[`submissions/${submission.userId}/${submission.taskId}/${submission.id}/status`] = 'rejected';
+        updates[`submissions/${submission.userId}/${submission.taskId}/${submission.id}/rejectedBy`] = adminId;
+        updates[`submissions/${submission.userId}/${submission.taskId}/${submission.id}/rejectReason`] = reason;
+
+        try {
+            await update(ref(db), updates);
+            closeModal(rejectionModal);
+            closeModal(viewSubmissionModal);
+            alert('সাবমিশন সফলভাবে বাতিল করা হয়েছে।');
+        } catch (error) {
+            console.error("সাবমিশন বাতিল করতে ব্যর্থ:", error);
+            alert('সাবমিশন বাতিল করতে একটি ত্রুটি হয়েছে।');
+        }
+    }
+
+    confirmRejectBtn.addEventListener('click', () => {
+        const reason = rejectReasonInput.value.trim();
+        if (reason === "") {
+            alert('বাতিল করার কারণ লিখতে হবে।');
+            return;
+        }
+        rejectSubmission(currentSubmissionId, reason);
+    });
+    closeViewModalBtn.addEventListener('click', () => closeModal(viewSubmissionModal));
+    closeRejectionModalBtn.addEventListener('click', () => closeModal(rejectionModal));
+
+    // --- Task Management ---
+    addTaskBtn.addEventListener('click', () => {
+        taskForm.reset();
+        document.getElementById('task-modal-title').textContent = 'নতুন টাস্ক যুক্ত করুন';
+        taskForm.dataset.mode = 'add';
+        openModal(taskModal);
+    });
+
+    closeTaskModalBtn.addEventListener('click', () => closeModal(taskModal));
+
+    taskForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const mode = taskForm.dataset.mode;
+        const taskId = taskForm.dataset.taskId;
+        const formData = new FormData(taskForm);
+        const taskData = {
+            title: formData.get('title'),
+            description: formData.get('description'),
+            category: formData.get('category'),
+            target: formData.get('target'),
+            deadline: formData.get('deadline'),
+            points: parseInt(formData.get('points')),
+            howToComplete: formData.get('howToComplete'),
+            channelLogo: formData.get('channelLogo'),
+            ownerId: auth.currentUser.uid,
+            submissionCount: 0
+        };
+
+        if (mode === 'add') {
+            await push(ref(db, 'tasks'), taskData);
+            alert('টাস্ক সফলভাবে যুক্ত হয়েছে।');
+        } else if (mode === 'edit') {
+            await update(ref(db, `tasks/${taskId}`), taskData);
+            alert('টাস্ক সফলভাবে আপডেট হয়েছে।');
+        }
+        closeModal(taskModal);
+    });
+
+    async function editTask(taskId) {
+        const taskRef = ref(db, `tasks/${taskId}`);
+        const snapshot = await get(taskRef);
+        if (!snapshot.exists()) {
+            alert('টাস্কটি পাওয়া যায়নি।');
+            return;
+        }
+        const taskData = snapshot.val();
+        document.getElementById('task-modal-title').textContent = 'টাস্ক এডিট করুন';
+        taskForm.dataset.mode = 'edit';
+        taskForm.dataset.taskId = taskId;
+        document.getElementById('task-title').value = taskData.title;
+        document.getElementById('task-description').value = taskData.description;
+        document.getElementById('task-category').value = taskData.category;
+        document.getElementById('task-target').value = taskData.target;
+        document.getElementById('task-deadline').value = taskData.deadline;
+        document.getElementById('task-points').value = taskData.points;
+        document.getElementById('task-how-to-complete').value = taskData.howToComplete;
+        document.getElementById('task-channel-logo').value = taskData.channelLogo;
+        openModal(taskModal);
+    }
+    
+    async function deleteTask(taskId) {
+        if (confirm('আপনি কি এই টাস্কটি ডিলিট করতে নিশ্চিত?')) {
+            try {
+                await remove(ref(db, `tasks/${taskId}`));
+                alert('টাস্ক সফলভাবে ডিলিট হয়েছে।');
+            } catch (error) {
+                console.error('টাস্ক ডিলিট করতে ব্যর্থ:', error);
+                alert('টাস্ক ডিলিট করতে একটি ত্রুটি হয়েছে।');
+            }
+        }
+    }
+
+    // --- Order Management ---
+    async function showOrderModal(orderId) {
+        const orderRef = ref(db, `orders/${orderId}`);
+        const snapshot = await get(orderRef);
+        if (!snapshot.exists()) {
+            alert('অর্ডারটি পাওয়া যায়নি।');
+            return;
+        }
+        const orderData = snapshot.val();
+        orderModalUserId.textContent = esc(orderData.userId);
+        orderModalPlatform.textContent = esc(orderData.platform);
+        orderModalCategory.textContent = esc(orderData.category);
+        orderModalTitle.textContent = esc(orderData.title);
+        orderModalDescription.textContent = esc(orderData.description);
+        orderModalTarget.textContent = esc(orderData.target);
+        orderModalLink.href = esc(orderData.link);
+        orderModalApproveBtn.dataset.orderId = orderId;
+        orderModalRejectBtn.dataset.orderId = orderId;
+        openModal(viewOrderModal);
+    }
+    closeOrderModalBtn.addEventListener('click', () => closeModal(viewOrderModal));
+
+    async function approveOrder(orderId) {
+        const orderRef = ref(db, `orders/${orderId}`);
+        const snapshot = await get(orderRef);
+        const orderData = snapshot.val();
+
+        if (!orderData || orderData.status !== 'pending') {
+            alert('এই অর্ডারটি অনুমোদন করা যাবে না।');
+            return;
+        }
+
+        const adminId = auth.currentUser.uid;
+        // অর্ডার ডেটা থেকে টাস্ক ডেটা তৈরি করুন
+        const taskData = {
+            title: orderData.title,
+            description: orderData.description,
+            howToComplete: `এই টাস্কটি সম্পন্ন করতে নিচের লিংকে যান এবং ${orderData.category.replace('-', ' ')} সম্পন্ন করুন।`,
+            category: orderData.category,
+            platform: orderData.platform,
+            target: orderData.target,
+            deadline: 'N/A',
+            points: 15,
+            channelLogo: 'https://via.placeholder.com/80x80?text=Task',
+            link: orderData.link,
+            submissionCount: 0,
+            ownerId: adminId
+        };
+
+        try {
+            // নতুন টাস্ক যোগ করুন
+            await push(ref(db, 'tasks'), taskData);
+
+            // অর্ডারের স্ট্যাটাস 'completed' এ আপডেট করুন
+            await update(orderRef, { status: 'completed', approvedBy: adminId });
+
+            closeModal(viewOrderModal);
+            alert('অর্ডার সফলভাবে অনুমোদিত হয়েছে এবং টাস্ক লিস্টে যুক্ত করা হয়েছে।');
+        } catch (error) {
+            console.error('অর্ডার অনুমোদন করতে ব্যর্থ:', error);
+            alert('অর্ডার অনুমোদন করতে একটি ত্রুটি হয়েছে।');
+        }
+    }
+
+    async function rejectOrder(orderId) {
+        if (confirm('আপনি কি এই অর্ডারটি বাতিল করতে নিশ্চিত?')) {
+            try {
+                const adminId = auth.currentUser.uid;
+                await update(ref(db, `orders/${orderId}`), { status: 'rejected', rejectedBy: adminId });
+                closeModal(viewOrderModal);
+                alert('অর্ডার সফলভাবে বাতিল করা হয়েছে।');
+            } catch (error) {
+                console.error('অর্ডার বাতিল করতে ব্যর্থ:', error);
+                alert('অর্ডার বাতিল করতে একটি ত্রুটি হয়েছে।');
+            }
+        }
+    }
+    
+    orderModalApproveBtn.addEventListener('click', (e) => {
+        approveOrder(e.target.dataset.orderId);
+    });
+
+    orderModalRejectBtn.addEventListener('click', (e) => {
+        rejectOrder(e.target.dataset.orderId);
+    });
+
+    async function deleteOrder(orderId) {
+        if (confirm('আপনি কি এই অর্ডারটি ডিলিট করতে নিশ্চিত?')) {
+            try {
+                await remove(ref(db, `orders/${orderId}`));
+                alert('অর্ডার সফলভাবে ডিলিট হয়েছে।');
+            } catch (error) {
+                console.error('অর্ডার ডিলিট করতে ব্যর্থ:', error);
+                alert('অর্ডার ডিলিট করতে একটি ত্রুটি হয়েছে।');
+            }
+        }
+    }
+
+    // --- NEW: Promo Banners Logic ---
+    addPromoBtn.addEventListener('click', () => {
+        promoForm.reset();
+        document.getElementById('promo-modal-title').textContent = 'নতুন ব্যানার যুক্ত করুন';
+        promoForm.dataset.mode = 'add';
+        openModal(promoModal);
+    });
+
+    closePromoModalBtn.addEventListener('click', () => closeModal(promoModal));
+
+    promoForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const mode = promoForm.dataset.mode;
+        const promoId = promoForm.dataset.promoId;
+        const formData = new FormData(promoForm);
+        const promoData = {
+            imageUrl: formData.get('imageUrl'),
+            redirectLink: formData.get('redirectLink'),
+            active: true,
+            timestamp: Date.now()
+        };
+
+        try {
+            if (mode === 'add') {
+                await push(ref(db, 'promotions'), promoData);
+                alert('নতুন ব্যানার সফলভাবে যুক্ত হয়েছে।');
+            } else if (mode === 'edit') {
+                await update(ref(db, `promotions/${promoId}`), promoData);
+                alert('ব্যানার সফলভাবে আপডেট হয়েছে।');
+            }
+            closeModal(promoModal);
+        } catch (error) {
+            console.error('ব্যানার যুক্ত/আপডেট করতে ব্যর্থ:', error);
+            alert('ব্যানার যুক্ত/আপডেট করতে একটি ত্রুটি হয়েছে।');
+        }
+    });
+
+    async function editPromo(promoId) {
+        const promo = currentPromos.find(p => p.id === promoId);
+        if (!promo) {
+            alert('ব্যানারটি পাওয়া যায়নি।');
+            return;
+        }
+        document.getElementById('promo-modal-title').textContent = 'ব্যানার এডিট করুন';
+        promoForm.dataset.mode = 'edit';
+        promoForm.dataset.promoId = promoId;
+        document.getElementById('promo-image-url').value = promo.imageUrl;
+        document.getElementById('promo-redirect-link').value = promo.redirectLink;
+        openModal(promoModal);
+    }
+
+    async function togglePromoStatus(promoId, status) {
+        try {
+            await update(ref(db, `promotions/${promoId}`), { active: status });
+            alert(`ব্যানারটি সফলভাবে ${status ? 'সক্রিয়' : 'নিষ্ক্রিয়'} করা হয়েছে।`);
+        } catch (error) {
+            console.error('ব্যানারের স্ট্যাটাস পরিবর্তন করতে ব্যর্থ:', error);
+            alert('ব্যানারের স্ট্যাটাস পরিবর্তন করতে একটি ত্রুটি হয়েছে।');
+        }
+    }
+
+    async function deletePromo(promoId) {
+        if (confirm('আপনি কি এই ব্যানারটি ডিলিট করতে নিশ্চিত?')) {
+            try {
+                await remove(ref(db, `promotions/${promoId}`));
+                alert('ব্যানার সফলভাবে ডিলিট হয়েছে।');
+            } catch (error) {
+                console.error('ব্যানার ডিলিট করতে ব্যর্থ:', error);
+                alert('ব্যানার ডিলিট করতে একটি ত্রুটি হয়েছে।');
+            }
+        }
+    }
+
+    // --- Tab Logic ---
+    function switchTab(tab) {
+        // Hide all tab contents
+        usersTabContent.classList.remove('active');
+        tasksTabContent.classList.remove('active');
+        submissionsTabContent.classList.remove('active');
+        ordersTabContent.classList.remove('active');
+        promotionsTabContent.classList.remove('active'); // NEW
+
+        // Deactivate all tab buttons
+        usersTabBtn.classList.remove('active');
+        tasksTabBtn.classList.remove('active');
+        submissionsTabBtn.classList.remove('active');
+        ordersTabBtn.classList.remove('active');
+        promotionsTabBtn.classList.remove('active'); // NEW
+
+        // Show the selected tab and activate its button
+        switch (tab) {
+            case 'users':
+                usersTabContent.classList.add('active');
+                usersTabBtn.classList.add('active');
+                loadUsers();
+                loadReferralPoints(); // নতুন ফাংশন কল করা হয়েছে
+                break;
+            case 'tasks':
+                tasksTabContent.classList.add('active');
+                tasksTabBtn.classList.add('active');
+                loadTasks();
+                break;
+            case 'submissions':
+                submissionsTabContent.classList.add('active');
+                submissionsTabBtn.classList.add('active');
+                loadSubmissions();
+                break;
+            case 'orders':
+                ordersTabContent.classList.add('active');
+                ordersTabBtn.classList.add('active');
+                loadOrders();
+                break;
+            case 'promotions': // NEW
+                promotionsTabContent.classList.add('active');
+                promotionsTabBtn.classList.add('active');
+                loadPromos();
+                break;
+        }
+    }
+
+    usersTabBtn.addEventListener('click', () => switchTab('users'));
+    tasksTabBtn.addEventListener('click', () => switchTab('tasks'));
+    submissionsTabBtn.addEventListener('click', () => switchTab('submissions'));
+    ordersTabBtn.addEventListener('click', () => switchTab('orders'));
+    promotionsTabBtn.addEventListener('click', () => switchTab('promotions')); // NEW
+
+    // --- Filter Dropdown Logic ---
+    submissionsFilterBtn.addEventListener('click', () => {
+        submissionsFilterOptions.classList.toggle('hidden');
+    });
+
+    submissionsFilterOptions.querySelectorAll('a').forEach(link => {
+        link.addEventListener('click', (e) => {
+            e.preventDefault();
+            const filter = e.target.dataset.filter;
+            submissionsFilterBtn.dataset.filterStatus = filter;
+            submissionsFilterBtn.querySelector('span').textContent = `স্ট্যাটাস দ্বারা ফিল্টার করুন: ${e.target.textContent}`;
+            loadSubmissions(filter, submissionSearchInput.value);
+            submissionsFilterOptions.classList.add('hidden');
+        });
+    });
+
+    ordersFilterBtn.addEventListener('click', () => {
+        ordersFilterOptions.classList.toggle('hidden');
+    });
+
+    ordersFilterOptions.querySelectorAll('a').forEach(link => {
+        link.addEventListener('click', (e) => {
+            e.preventDefault();
+            const filter = e.target.dataset.filter;
+            ordersFilterBtn.dataset.filterStatus = filter;
+            ordersFilterBtn.querySelector('span').textContent = `স্ট্যাটাস দ্বারা ফিল্টার করুন: ${e.target.textContent}`;
+            loadOrders(filter, orderSearchInput.value);
+            ordersFilterOptions.classList.add('hidden');
+        });
+    });
+
+    document.addEventListener('DOMContentLoaded', () => {
+        // প্রাথমিকভাবে ব্যবহারকারী ট্যাব লোড করুন
+        switchTab('users');
+    });
+</script>
+
+</body>
+</html>
+

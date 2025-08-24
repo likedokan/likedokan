@@ -1,0 +1,1269 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1" name="viewport"/>
+    <title>Water Drop Theme Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"> </script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri&display=swap" rel="stylesheet"/>
+    <style>
+        /* Global styles for the body and font */
+        body {
+            font-family: 'Hind Siliguri', sans-serif;
+            overflow-x: hidden; /* Ensures no horizontal scrollbar due to sidebar */
+        }
+
+        /* Skeleton Loading Styles for cards */
+        .skeleton-card {
+            background-color: #f3f4f6;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .shimmer {
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(to right, #f3f4f6 8%, #e5e7eb 18%, #f3f4f6 33%); /* gray-100, gray-200 */
+            background-size: 800px 104px;
+            position: absolute;
+            top: 0;
+            left: -800px; /* Start off-screen to the left */
+            animation: shimmer 1.5s infinite linear;
+        }
+
+        @keyframes shimmer {
+            0% {
+                left: -800px;
+            }
+            100% {
+                left: 800px;
+            }
+        }
+
+        .skeleton-line {
+            background-color: #e5e7eb; /* gray-200 */
+            border-radius: 4px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .skeleton-circle {
+            background-color: #e5e7eb; /* gray-200 */
+            border-radius: 50%;
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* Styles for profile picture */
+        #header-profile-logo {
+            width: 48px; /* Matches logo size */
+            height: 48px; /* Matches logo size */
+            border-radius: 50%; /* Circular */
+            border: 2px solid #007bff; /* Example border */
+            object-fit: cover;
+        }
+
+        /* Styles for mobile slide-out menu */
+        #mobileSliderMenu {
+            position: fixed;
+            top: 0;
+            right: -280px; /* Hidden state */
+            width: 280px; /* Sidebar width */
+            height: 100%;
+            background-color: #ffffff; /* White background */
+            box-shadow: -8px 0 15px rgba(0, 0, 0, 0.15), inset 4px 0 8px rgba(255, 255, 255, 0.6);
+            z-index: 1000; /* Ensures it's on top of everything */
+            transition: right 0.35s cubic-bezier(0.4, 0, 0.2, 1); /* Smooth slide animation */
+            padding-top: 5rem; /* According to header height */
+            display: flex;
+            flex-direction: column;
+            border-top-left-radius: 1rem;
+            border-bottom-left-radius: 1rem;
+            backdrop-filter: saturate(180%) blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+        }
+
+        #mobileSliderMenu.active {
+            right: 0; /* Visible state */
+            box-shadow: -12px 0 25px rgba(0, 0, 0, 0.25), inset 4px 0 12px rgba(255, 255, 255, 0.7);
+        }
+
+        #sliderMenuContent {
+            flex-grow: 1; /* Allows menu items to fill empty space */
+            padding: 1.5rem 0;
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+
+        #sliderMenuContent .menu-item {
+            display: flex;
+            align-items: center;
+            padding: 0.75rem 1.75rem;
+            color: #4338ca; /* indigo-700 */
+            font-weight: 600; /* font-semibold */
+            font-size: 1.125rem; /* text-lg */
+            border-radius: 0.75rem;
+            transition: background-color 0.3s ease, color 0.3s ease, transform 0.2s ease;
+            text-decoration: none; /* Removes underline */
+            box-shadow: 0 0 0 0 transparent;
+            user-select: none;
+            position: relative;
+            overflow: hidden;
+        }
+
+        #sliderMenuContent .menu-item::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            height: 100%;
+            width: 4px;
+            background: #4338ca;
+            border-top-right-radius: 0.75rem;
+            border-bottom-right-radius: 0.75rem;
+            transform: scaleY(0);
+            transform-origin: center;
+            transition: transform 0.3s ease;
+            z-index: 1;
+        }
+
+        #sliderMenuContent .menu-item:hover::before,
+        #sliderMenuContent .menu-item:focus-visible::before {
+            transform: scaleY(1);
+        }
+
+        #sliderMenuContent .menu-item:hover {
+            background-color: #4338ca; /* indigo-700 */
+            color: #e0e7ff; /* indigo-100 */
+            transform: translateX(6px);
+            box-shadow: 0 8px 15px rgba(67, 56, 202, 0.3);
+            z-index: 10;
+            outline: none;
+        }
+
+        #sliderMenuContent .menu-item:focus-visible {
+            outline: 2px solid #4338ca;
+            outline-offset: 2px;
+        }
+
+        /* Overlay backdrop */
+        #sliderBackdrop {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.45); /* Darker backdrop */
+            z-index: 999; /* Stays below the slider */
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.35s cubic-bezier(0.4, 0, 0.2, 1), visibility 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+            backdrop-filter: blur(2px);
+            -webkit-backdrop-filter: blur(2px);
+        }
+
+        #sliderBackdrop.active {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        /* New styles for notification dropdown - caret */
+        #notificationDropdown::before {
+            content: '';
+            position: absolute;
+            top: -10px; /* Above the dropdown */
+            right: 18px; /* Aligned with notification button */
+            border-width: 0 10px 10px 10px; /* Creates a triangle */
+            border-color: transparent transparent white transparent; /* White triangle */
+            filter: drop-shadow(0 -2px 1px rgba(0,0,0,0.05)); /* Light shadow */
+            z-index: 51; /* Will be above the dropdown */
+        }
+
+        #notificationDropdown::after {
+            content: '';
+            position: absolute;
+            top: -11px; /* 1px higher for border */
+            right: 343px; /* Aligned with notification button */
+            border-width: 0 10px 10px 10px;
+            border-color: transparent transparent #e2e8f0 transparent; /* Border color */
+            z-index: 50; /* Above dropdown but below white triangle */
+        }
+
+        /* Adjust position of notification dropdown for mobile screens (if needed) */
+        @media (max-width: 639px) { /* Below sm breakpoint */
+            #notificationDropdown::before,
+            #notificationDropdown::after {
+                right: 25px; /* Adjust for notification button position on small screens */
+            }
+        }
+        /* Additional styles for spinner */
+        .spinner {
+            border: 2px solid rgba(0, 0, 0, 0.1);
+            border-left-color: #4f46e5; /* indigo-600 */
+            border-radius: 50%;
+            width: 16px;
+            height: 16px;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* New styles for login/logout button */
+        .btn-login {
+            background-color: #22c55e; /* green-500 */
+            color: white;
+        }
+        .btn-login:hover {
+            background-color: #16a34a; /* green-600 */
+        }
+        .btn-login:focus {
+            outline: none;
+            box-shadow: 0 0 0 2px #4ade80, 0 0 0 4px rgba(34, 197, 94, 0.5); /* green-300 ring */
+        }
+
+        .btn-logout {
+            background-color: #ef4444; /* red-500 */
+            color: white;
+        }
+        .btn-logout:hover {
+            background-color: #dc2626; /* red-600 */
+        }
+        .btn-logout:focus {
+            outline: none;
+            box-shadow: 0 0 0 2px #f87171, 0 0 0 4px rgba(239, 68, 68, 0.5); /* red-300 ring */
+        }
+
+        /* Custom styles for the new select boxes - UPDATED */
+        .custom-select-container {
+            position: relative;
+            user-select: none;
+            font-size: 1rem; /* Base font size */
+        }
+
+        .custom-select-trigger {
+            @apply w-full px-4 py-3 border rounded-lg cursor-pointer transition-all duration-300;
+            @apply bg-white flex items-center justify-between text-gray-700 shadow-sm;
+            border-color: #e2e8f0; /* Neutral border */
+            position: relative;
+            overflow: hidden;
+            z-index: 1;
+        }
+        .custom-select-trigger:focus {
+            outline: none;
+            border-color: #4f46e5; /* indigo-600 */
+            box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.3); /* indigo-600 with transparency */
+        }
+        .custom-select-trigger::after {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: #f1f5f9; /* slate-100 */
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            z-index: -1;
+        }
+        .custom-select-trigger:hover::after {
+            opacity: 1;
+        }
+        .custom-select-trigger.active {
+            @apply rounded-b-none border-b-0;
+        }
+        .custom-select-trigger .fa-chevron-down {
+            transition: transform 0.3s ease;
+        }
+        .custom-select-trigger.active .fa-chevron-down {
+            transform: rotate(180deg);
+        }
+
+        .custom-options {
+            @apply absolute w-full left-0 bg-white rounded-b-lg shadow-xl z-20 overflow-hidden;
+            border: 1px solid #e2e8f0; /* Neutral border */
+            border-top: none;
+            max-height: 0;
+            opacity: 0;
+            transform: translateY(-5px);
+            transition: max-height 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94),
+                        opacity 0.3s ease,
+                        transform 0.3s ease;
+        }
+        .custom-options.active {
+            max-height: 250px; /* Increased max-height for better scrollability */
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .custom-option {
+            @apply px-4 py-3 cursor-pointer transition-colors duration-200;
+            @apply flex items-center justify-between text-gray-600;
+            border-bottom: 1px solid #f8fafc; /* Subtle light border between options */
+        }
+        .custom-option:last-child {
+            border-bottom: none;
+        }
+        .custom-option:hover {
+            @apply bg-blue-50 text-blue-700;
+        }
+        .custom-option.selected {
+            @apply bg-blue-100 text-blue-800 font-semibold;
+            position: relative;
+        }
+        .custom-option.selected::before {
+            content: '✓';
+            font-family: 'Font Awesome 5 Free';
+            font-weight: 900;
+            position: absolute;
+            right: 1rem;
+            color: #2563eb; /* blue-600 */
+        }
+
+        /* Additional styles for spinner */
+        .spinner {
+            border: 2px solid rgba(0, 0, 0, 0.1);
+            border-left-color: #4f46e5; /* indigo-600 */
+            border-radius: 50%;
+            width: 16px;
+            height: 16px;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* New styles for login/logout button */
+        .btn-login {
+            background-color: #22c55e; /* green-500 */
+            color: white;
+        }
+        .btn-login:hover {
+            background-color: #16a34a; /* green-600 */
+        }
+        .btn-login:focus {
+            outline: none;
+            box-shadow: 0 0 0 2px #4ade80, 0 0 0 4px rgba(34, 197, 94, 0.5); /* green-300 ring */
+        }
+
+        .btn-logout {
+            background-color: #ef4444; /* red-500 */
+            color: white;
+        }
+        .btn-logout:hover {
+            background-color: #dc2626; /* red-600 */
+        }
+        .btn-logout:focus {
+            outline: none;
+            box-shadow: 0 0 0 2px #f87171, 0 0 0 4px rgba(239, 68, 68, 0.5); /* red-300 ring */
+        }
+    </style>
+</head>
+<body class="bg-gradient-to-b from-cyan-100 to-blue-200 min-h-screen flex flex-col">
+
+    <!-- Header Section (from Header.html) -->
+    <header class="bg-white shadow-xl sticky top-0 z-50 border-b border-gray-200">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 flex items-center justify-between">
+            <div class="flex items-center space-x-3 sm:space-x-4">
+                <img alt="প্রোফাইল ছবি"
+                     class="w-10 h-10 sm:w-12 sm:h-12 rounded-full border-2 border-indigo-500 shadow-md"
+                     loading="lazy"
+                     src="https://i.pravatar.cc/300?img=1"
+                     id="header-profile-logo"/>
+                <div class="hidden sm:block">
+                    <p id="welcomeMessage" class="text-gray-700 font-semibold text-base sm:text-lg leading-tight select-none">Your Name</p>
+                    <p class="text-gray-500 text-xs sm:text-sm select-none">আপনার প্রোফাইল</p>
+                </div>
+                <h1 class="text-2 sm:text-3xl font-extrabold text-indigo-600 tracking-wide select-none ml-4 sm:ml-6">
+                    <span>Order Task</span>
+                </h1>
+            </div>
+
+            <div class="flex items-center space-x-3 sm:space-x-4">
+                <div class="flex items-center space-x-3">
+                    <div id="userPointsCard" aria-label="আপনার পয়েন্ট"
+                         class="flex items-center bg-indigo-50 text-indigo-700 font-semibold px-2 py-1 rounded-full shadow select-none text-xs scale-90 hidden">
+                        <i class="fas fa-coins mr-1 text-yellow-400 text-sm"></i>
+                        <span id="userPointsDisplay">0 Points</span>
+                    </div>
+
+                    <div id="signInStatusCard" aria-label="সাইন-ইন স্ট্যাটাস"
+                         class="flex items-center bg-red-50 text-red-700 font-semibold px-2 py-1 rounded-full shadow select-none text-xs scale-90 hidden cursor-pointer">
+                        <i class="fas fa-user-circle mr-1 text-red-500 text-sm"></i>
+                        <span id="signInStatusDisplay">লগইন করুন</span>
+                    </div>
+
+                    <div id="loadingStatusCard" class="flex items-center bg-gray-100 text-gray-600 font-semibold px-2 py-1 rounded-full shadow select-none text-xs scale-90">
+                        <div class="spinner mr-2"></div>
+                        <span>লোড হচ্ছে...</span>
+                    </div>
+                </div>
+
+                <button id="notificationButton" aria-label="নোটিফিকেশন"
+                        class="relative text-indigo-600 hover:text-indigo-800 transition focus:outline-none">
+                    <i class="fas fa-bell text-lg sm:text-xl"></i>
+                    <span class="absolute -top-1 -right-1 sm:-top-2 sm:-right-2 bg-red-600 text-white text-xs rounded-full px-1 sm:px-1.5 shadow-lg" id="notificationCountDisplay">0</span>
+                </button>
+
+                <div id="notificationDropdown" class="absolute top-16 right-4 sm:right-6 md:right-10 bg-white border border-gray-200 rounded-lg shadow-lg w-64 md:w-80 z-50 hidden">
+                    <div class="px-4 py-3 border-b border-gray-200 flex justify-between items-center">
+                        <h3 class="font-semibold text-gray-800">নোটিফিকেশনস</h3>
+                        <span class="text-xs text-gray-500" id="newNotificationCount">০টি নতুন</span>
+                    </div>
+                    <div class="py-2 max-h-60 overflow-y-auto" id="notificationList">
+                    </div>
+                    <div class="px-4 py-3 border-t border-gray-200 text-center">
+                        <a href="#" class="text-sm text-blue-600 hover:text-blue-800 font-medium">সকল নোটিফিকেশন দেখুন</a>
+                    </div>
+                </div>
+                <button id="mobileMenuBtn" aria-label="মেনু"
+                        aria-controls="mobileSliderMenu"
+                        aria-expanded="false"
+                        class="md:hidden text-indigo-600 hover:text-indigo-800 text-xl sm:text-2xl focus:outline-none">
+                    <i class="fas fa-bars"></i>
+                </button>
+
+                <nav aria-label="প্রধান নেভিগেশন"
+                     class="hidden md:flex items-center space-x-6 lg:space-x-8 text-indigo-600 font-semibold select-none text-base"
+                     role="navigation">
+                    <a class="hover:text-indigo-800 transition" href="dashboard.html">ড্যাশবোর্ড</a>
+                    <a class="hover:text-indigo-800 transition" href="mytasklist.html">টাস্ক</a>
+                    <a class="hover:text-indigo-800 transition" href="order.html">অর্ডার</a>
+                    <a class="hover:text-indigo-800 transition" href="reffer.html">রেফার</a>
+                    <a class="hover:text-indigo-800 transition" href="leaderboard.html">লিডারবোর্ড</a>
+                </nav>
+            </div>
+        </div>
+
+        <div id="mobileSliderMenu" role="menu" aria-label="মোবাইল স্লাইডার মেনু">
+            <div class="flex items-center space-x-3 p-4 border-b border-gray-200 mb-4">
+                <img alt="স্লাইডার প্রোফাইল ছবি"
+                     class="w-16 h-16 rounded-full border-2 border-indigo-500 shadow-md"
+                     loading="lazy"
+                     src="https://i.pravatar.cc/300?img=1"
+                     id="slider-profile-pic"/>
+                <div>
+                    <p id="sliderUserName" class="text-gray-700 font-semibold text-lg leading-tight">Your Name</p>
+                    <p class="text-gray-500 text-sm">আপনার প্রোফাইল</p>
+                </div>
+            </div>
+        <div id="sliderMenuContent" role="none">
+          <a class="menu-item" href="dashboard.html" role="menuitem" tabindex="0">ড্যাশবোর্ড</a>
+          <a class="menu-item" href="mytasklist.html" role="menuitem" tabindex="0">আমার টাস্ক</a>
+          <a class="menu-item" href="completedtask.html" role="menuitem" tabindex="0">সম্পূর্ণ করা টাস্ক</a>
+          <a class="menu-item" href="order.html" role="menuitem" tabindex="0">অর্ডার করুন</a>
+          <a class="menu-item" href="reffer.html" role="menuitem" tabindex="0">রেফার করুন</a>
+          <a class="menu-item" href="leaderboard.html" role="menuitem" tabindex="0">লিডারবোর্ড</a>
+        </div>
+            <div class="p-4 mt-auto border-t border-gray-200">
+                <button id="loginLogoutButton" class="w-full py-2 px-4 rounded-md font-semibold transition-colors duration-200
+                                                focus:outline-none focus:ring-2 focus:ring-offset-2">
+                    লগইন করুন
+                </button>
+            </div>
+        </div>
+        <div id="sliderBackdrop" class="hidden" tabindex="-1" aria-hidden="true"></div>
+    </header>
+
+    <main class="flex-grow max-w-3xl mx-auto px-6 py-12 w-full mt-[80px]">
+        <h2 class="text-3xl font-extrabold text-blue-800 mb-8 text-center">অর্ডার ফর্ম</h2>
+
+        <!-- ফর্ম সাবমিশন স্ট্যাটাস দেখানোর জন্য নতুন div -->
+        <div id="statusMessageContainer" class="hidden p-4 rounded-lg text-white mb-6 transition-all duration-300">
+            <p id="statusMessage" class="font-medium text-sm text-center"></p>
+        </div>
+
+        <form id="orderForm" class="bg-white rounded-lg shadow-lg p-8 space-y-6">
+            <!-- প্ল্যাটফর্ম নির্বাচন -->
+            <div>
+                <label for="platform" class="block text-blue-700 font-semibold mb-2">প্ল্যাটফর্ম নির্বাচন করুন</label>
+                <div class="custom-select-container">
+                    <div id="platform-trigger" class="custom-select-trigger">
+                        <span>একটি প্ল্যাটফর্ম নির্বাচন করুন</span>
+                        <i class="fas fa-chevron-down text-indigo-700 transition-transform duration-200"></i>
+                    </div>
+                    <div id="platform-options" class="custom-options">
+                        <!-- Options will be populated by JavaScript -->
+                    </div>
+                    <input type="hidden" id="platform" name="platform" value="" required>
+                </div>
+            </div>
+
+            <!-- ক্যাটাগরি নির্বাচন -->
+            <div id="categoryContainer" class="hidden">
+                <label for="category" class="block text-blue-700 font-semibold mb-2">ক্যাটাগরি নির্বাচন করুন</label>
+                <div class="custom-select-container">
+                    <div id="category-trigger" class="custom-select-trigger">
+                        <span>প্রথমে একটি প্ল্যাটফর্ম নির্বাচন করুন</span>
+                        <i class="fas fa-chevron-down text-indigo-700 transition-transform duration-200"></i>
+                    </div>
+                    <div id="category-options" class="custom-options">
+                        <!-- Options will be populated by JavaScript -->
+                    </div>
+                    <input type="hidden" id="category" name="category" value="" required>
+                </div>
+            </div>
+
+            <!-- টার্গেট ড্রপডাউন এখানে সরানো হয়েছে -->
+            <div id="subscribeTargetContainer" class="hidden">
+                <label id="subscribeTargetLabel" for="subscribeTarget" class="block text-blue-700 font-semibold mb-2">টার্গেট নির্বাচন করুন</label>
+                <div class="custom-select-container">
+                    <div id="subscribeTarget-trigger" class="custom-select-trigger">
+                        <span>একটি টার্গেট নির্বাচন করুন</span>
+                        <i class="fas fa-chevron-down text-indigo-700 transition-transform duration-200"></i>
+                    </div>
+                    <div id="subscribeTarget-options" class="custom-options">
+                        <!-- Options will be populated by JavaScript -->
+                    </div>
+                    <input type="hidden" id="subscribeTarget" name="subscribeTarget" value="" required>
+                </div>
+            </div>
+
+            <!-- ডাইনামিক লেবেল এবং প্লেসহোল্ডার সহ লিংক ফিল্ড -->
+            <div>
+                <label id="channelLinkLabel" for="channelLink" class="block text-blue-700 font-semibold mb-2">চ্যানেল লিংক</label>
+                <input type="text" id="channelLink" name="channelLink" placeholder="যেমন: www.youtube.com/user অথবা facebook.com/profile" class="w-full px-4 py-3 border border-blue-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400" required>
+            </div>
+            <div>
+                <label for="title" class="block text-blue-700 font-semibold mb-2">টাইটেল</label>
+                <input type="text" id="title" name="title" placeholder="আপনার টাস্কের শিরোনাম লিখুুন" class="w-full px-4 py-3 border border-blue-300 rounded-md focus:outline-none focus:ring-2 focus:ring-400" required>
+            </div>
+            <div>
+                <label for="description" class="block text-blue-700 font-semibold mb-2">সম্পূর্ণ করার নিয়ম</label>
+                <textarea id="description" name="description" rows="4" placeholder="ইউজার কিভাবে টাস্কটি সম্পূর্ণ করবে তা লিখুন" class="w-full px-4 py-3 border border-blue-300 rounded-md resize-none focus:outline-none focus:ring-2 focus:ring-blue-400" required></textarea>
+            </div>
+            <button type="submit" id="submitButton" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-md transition">
+                সাবমিট করুন
+            </button>
+        </form>
+    </main>
+
+    <footer class="bg-blue-700 text-white py-6 mt-12">
+        <div class="max-w-5xl mx-auto px-6 text-center text-sm">
+            © ২০২৪ ওয়াটার ড্রপ থিম. সর্বস্বত্ব সংরক্ষিত।
+        </div>
+    </footer>
+
+    <script type="module">
+        // Firebase Modular Imports
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-app.js";
+        import { getDatabase, ref, push, serverTimestamp, onValue, get, child, update } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-database.js"; // Realtime Database modules
+        import { getAuth, onAuthStateChanged, signOut, signInAnonymously } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-auth.js"; // Firebase Authentication মডিউল
+
+        // Firebase Configuration (dashboard.html থেকে শেখা)
+        const firebaseConfig = {
+            apiKey: "AIzaSyAC4h55aA0Zz--V5ejyndzR5WC_-9rAPio",
+            authDomain: "subscribe-bot-6f9b2.firebaseapp.com",
+            databaseURL: "https://subscribe-bot-6f9b2-default-rtdb.firebaseio.com", // .io.com ডোমেইন ব্যবহার করা হয়েছে
+            projectId: "subscribe-bot-6f9b2",
+            storageBucket: "subscribe-bot-6f9b2.firebasestorage.app",
+            messagingSenderId: "141787931031",
+            appId: "1:141787931031:web:2108a3e930f5ce4fbc64d2",
+            measurementId: "G-HSDKCJB14Y"
+        };
+
+        // Init Firebase
+        const app = initializeApp(firebaseConfig);
+        const db = getDatabase(app); // Realtime Database
+        const auth = getAuth(app); // Authentication
+
+        // Make db and auth globally accessible for convenience
+        window.db = db;
+        window.auth = auth;
+        
+        // গ্লোবাল ভ্যারিয়েবল, যাতে ইউজারের ডেটা অ্যাক্সেস করা যায়
+        let currentUserData = null;
+
+        // Utility Functions
+        function esc(str = "") {
+            return String(str)
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;");
+        }
+
+        // --- Event listeners and functions for header elements (adapted to work after template loading) ---
+        let headerProfileLogo, userPointsCard, userPointsDisplay, signInStatusCard, signInStatusDisplay,
+            loadingStatusCard, notificationCountDisplay, newNotificationCount, notificationList,
+            welcomeMessage, sliderProfilePic, sliderUserName, loginLogoutButton, notificationButton,
+            notificationDropdown, mobileMenuBtn, mobileSliderMenu, sliderBackdrop;
+
+        // Function to get elements after the template is loaded
+        function getHeaderElements() {
+            headerProfileLogo = document.getElementById('header-profile-logo');
+            userPointsCard = document.getElementById('userPointsCard');
+            userPointsDisplay = document.getElementById('userPointsDisplay');
+            signInStatusCard = document.getElementById('signInStatusCard');
+            signInStatusDisplay = document.getElementById('signInStatusDisplay');
+            loadingStatusCard = document.getElementById('loadingStatusCard');
+            notificationCountDisplay = document.getElementById('notificationCountDisplay');
+            newNotificationCount = document.getElementById('newNotificationCount');
+            notificationList = document.getElementById('notificationList');
+            welcomeMessage = document.getElementById('welcomeMessage');
+            sliderProfilePic = document.getElementById('slider-profile-pic');
+            sliderUserName = document.getElementById('sliderUserName');
+            loginLogoutButton = document.getElementById('loginLogoutButton');
+            notificationButton = document.getElementById('notificationButton');
+            notificationDropdown = document.getElementById('notificationDropdown');
+            mobileMenuBtn = document.getElementById('mobileMenuBtn');
+            mobileSliderMenu = document.getElementById('mobileSliderMenu');
+            sliderBackdrop = document.getElementById('sliderBackdrop');
+        }
+
+        const DEFAULT_PROFILE_PIC_URL = 'https://i.pravatar.cc/300'; // Updated to match dashboard's default
+
+        // signInStatusCard click event listener
+        function setupSignInCardListener() {
+            if (signInStatusCard) {
+                signInStatusCard.addEventListener('click', () => {
+                    window.location.href = 'login.html';
+                });
+            }
+        }
+        
+        // --- Firebase থেকে ইউজারের ডেটা লোড করার ফাংশন ---
+        async function loadUserDataFromFirebase() {
+            // First hide all cards and show loading spinner
+            if (userPointsCard) userPointsCard.classList.add('hidden');
+            if (signInStatusCard) signInStatusCard.classList.add('hidden');
+            if (loadingStatusCard) loadingStatusCard.classList.remove('hidden');
+
+            onAuthStateChanged(auth, async (user) => {
+                let displayNameToShow = "ইউজার"; // Default placeholder if no specific name is found
+                currentUserData = null; // Reset গ্লোবাল ভ্যারিয়েবল
+                
+                if (user) {
+                    try {
+                        const userRef = child(ref(db), `users/${user.uid}`);
+                        const userSnap = await get(userRef);
+
+                        if (userSnap.exists()) {
+                            const userData = userSnap.val();
+                            currentUserData = userData; // গ্লোবাল ভ্যারিয়েবলে ডেটা সেভ করুন
+
+                            // Load profile picture
+                            if (userData.profilePictureUrl) {
+                                if (headerProfileLogo) headerProfileLogo.src = userData.profilePictureUrl;
+                                if (sliderProfilePic) sliderProfilePic.src = userData.profilePictureUrl;
+                            } else {
+                                if (headerProfileLogo) headerProfileLogo.src = DEFAULT_PROFILE_PIC_URL;
+                                if (sliderProfilePic) sliderProfilePic.src = DEFAULT_PROFILE_PIC_URL;
+                            }
+                            // User's display name
+                            if (userData.displayName) {
+                                displayNameToShow = userData.displayName;
+                            } else if (user.email) {
+                                displayNameToShow = user.email;
+                            }
+
+                            // Load points and show card
+                            if (typeof userData.points !== 'undefined') {
+                                if (userPointsDisplay) userPointsDisplay.textContent = `${esc(userData.points)} Points`;
+                            } else {
+                                if (userPointsDisplay) userPointsDisplay.textContent = `0 Points`;
+                            }
+                            if (userPointsCard) userPointsCard.classList.remove('hidden');
+
+                        } else {
+                            if (headerProfileLogo) headerProfileLogo.src = DEFAULT_PROFILE_PIC_URL;
+                            if (sliderProfilePic) sliderProfilePic.src = DEFAULT_PROFILE_PIC_URL;
+                            if (userPointsDisplay) userPointsDisplay.textContent = `0 Points`;
+                            if (userPointsCard) userPointsCard.classList.remove('hidden');
+
+                            if (user.email) {
+                                displayNameToShow = user.email;
+                            }
+                            // যদি ডেটাবেজে ডেটা না থাকে, তবুও কিছু তথ্য গ্লোবাল ভ্যারিয়েবলে সেভ করা
+                            currentUserData = {
+                                displayName: displayNameToShow
+                            };
+                        }
+                        // If logged in, hide loading and sign-in cards
+                        if (loadingStatusCard) loadingStatusCard.classList.add('hidden');
+                        if (signInStatusCard) signInStatusCard.classList.add('hidden');
+
+                        // Update welcome message
+                        if (welcomeMessage) welcomeMessage.textContent = ` ${displayNameToShow}`;
+                        if (sliderUserName) sliderUserName.textContent = ` ${displayNameToShow}`;
+
+                        if (loginLogoutButton) {
+                            loginLogoutButton.textContent = 'লগআউট করুন';
+                            loginLogoutButton.classList.remove('btn-login');
+                            loginLogoutButton.classList.add('btn-logout');
+                            loginLogoutButton.onclick = async () => {
+                                await signOut(auth);
+                                closeSliderMenu();
+                            };
+                        }
+
+                    } catch (error) {
+                        console.error("Error loading user data from Realtime Database:", error);
+                        if (headerProfileLogo) headerProfileLogo.src = DEFAULT_PROFILE_PIC_URL;
+                        if (sliderProfilePic) sliderProfilePic.src = DEFAULT_PROFILE_PIC_URL;
+                        if (userPointsDisplay) userPointsDisplay.textContent = `ত্রুটি`;
+                        if (userPointsCard) userPointsCard.classList.add('hidden');
+                        if (signInStatusCard) signInStatusCard.classList.add('hidden');
+                        if (loadingStatusCard) loadingStatusCard.classList.add('hidden');
+                        if (welcomeMessage) welcomeMessage.textContent = `Your Name`;
+                        if (sliderUserName) sliderUserName.textContent = `Your Name`;
+
+                        if (loginLogoutButton) {
+                            loginLogoutButton.textContent = 'লগইন করুন';
+                            loginLogoutButton.classList.remove('btn-logout');
+                            loginLogoutButton.classList.add('btn-login');
+                            loginLogoutButton.onclick = () => { /* Implement login action here */ };
+                        }
+                    }
+                } else {
+                    // No user logged in
+                    if (headerProfileLogo) headerProfileLogo.src = DEFAULT_PROFILE_PIC_URL;
+                    if (sliderProfilePic) sliderProfilePic.src = DEFAULT_PROFILE_PIC_URL;
+                    if (userPointsDisplay) userPointsDisplay.textContent = `লগইন করুন`;
+                    if (userPointsCard) userPointsCard.classList.add('hidden');
+                    if (signInStatusDisplay) signInStatusDisplay.textContent = `লগইন করুন`;
+                    if (signInStatusCard) signInStatusCard.classList.remove('hidden');
+                    if (loadingStatusCard) loadingStatusCard.classList.add('hidden');
+                    if (welcomeMessage) welcomeMessage.textContent = `Your Name`;
+                    if (sliderUserName) sliderUserName.textContent = `Your Name`;
+
+                    // Attempt anonymous sign-in if no user is signed in
+                    signInAnonymously(auth).then(() => {
+                        console.log("Signed in anonymously for initial Firebase access.");
+                    }).catch((error) => {
+                        console.error("Error signing in anonymously:", error);
+                    });
+                }
+            });
+        }
+
+        // --- Notification loading functions ---
+        async function loadNotifications(userId) {
+            try {
+                const snapshot = await get(child(ref(db), "notifications"));
+
+                if (!snapshot.exists()) {
+                    return [];
+                }
+
+                const notificationsData = snapshot.val();
+                const allNotificationData = [];
+
+                for (const notificationId in notificationsData) {
+                    const data = notificationsData[notificationId];
+                    const isRead = data.readBy && userId ? data.readBy[userId] : false;
+                    allNotificationData.push({ id: notificationId, ...data, read: isRead });
+                }
+
+                allNotificationData.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
+
+                return allNotificationData;
+            } catch (error) {
+                console.error("Error loading notifications from Realtime Database:", error);
+                return [];
+            }
+        }
+
+        async function markNotificationAsRead(notificationId, userId) {
+            try {
+                await update(ref(db, `notifications/${notificationId}/readBy/${userId}`), true);
+                loadAllNotificationsForUI();
+            } catch (error) {
+                console.error("Error marking notification as read:", error);
+            }
+        }
+
+        async function loadAllNotificationsForUI() {
+            let unreadCount = 0;
+
+            onAuthStateChanged(auth, async (user) => {
+                const currentUserId = user ? user.uid : null;
+                const allNotifications = await loadNotifications(currentUserId);
+
+                if (notificationList) notificationList.innerHTML = '';
+
+                if (allNotifications.length === 0) {
+                    if (notificationList) notificationList.innerHTML = `<p class="text-center text-gray-500 py-2">কোনো নোটিফিকেশন নেই।</p>`;
+                } else {
+                    allNotifications.forEach((notification) => {
+                        if (!notification.read) {
+                            unreadCount++;
+                        }
+
+                        const notificationItem = document.createElement('a');
+                        notificationItem.href = notification.link || '#';
+                        notificationItem.className = `block px-4 py-2 hover:bg-gray-100 border-b border-gray-100 last:border-b-0 ${notification.read ? 'opacity-70' : 'font-semibold'}`;
+
+                        let timeAgoText = "এইমাত্র";
+                        if (notification.timestamp) {
+                            const date = new Date(notification.timestamp);
+                            const now = new Date();
+                            const diffMs = now - date;
+                            const diffMinutes = Math.round(diffMs / (1000 * 60));
+                            const diffHours = Math.round(diffMs / (1000 * 60 * 60));
+                            const diffDays = Math.round(diffMs / (1000 * 60 * 60 * 24));
+
+                            if (diffMinutes < 1) {
+                                timeAgoText = "এইমাত্র";
+                            } else if (diffMinutes < 60) {
+                                timeAgoText = `${diffMinutes} মিনিট আগে`;
+                            } else if (diffHours < 24) {
+                                timeAgoText = `${diffHours} ঘন্টা আগে`;
+                            } else {
+                                timeAgoText = `${diffDays} দিন আগে`;
+                            }
+                        }
+
+                        notificationItem.innerHTML = `
+                            <p class="text-sm text-gray-800">${esc(notification.title || "Untitled Notification")}</p>
+                            ${notification.message ? `<p class="text-xs text-gray-500 mt-1">${esc(notification.message)}</p>` : ""}
+                            <p class="text-xs text-gray-400 mt-1">${timeAgoText}</p>
+                        `;
+                        if (notificationList) notificationList.appendChild(notificationItem);
+
+                        if (!notification.read && currentUserId) {
+                            notificationItem.addEventListener('click', () => {
+                                markNotificationAsRead(notification.id, currentUserId);
+                            });
+                        }
+                    });
+                }
+                if (notificationCountDisplay) notificationCountDisplay.textContent = unreadCount.toString();
+                if (newNotificationCount) newNotificationCount.textContent = `${unreadCount}টি নতুন`;
+
+                if (unreadCount === 0 && allNotifications.length === 0) {
+                    if (notificationList) notificationList.innerHTML = `<p class="text-center text-gray-500 py-2">কোনো নোটিফিকেশন নেই।</p>`;
+                } else if (unreadCount === 0 && allNotifications.length > 0) {
+                    if (newNotificationCount) newNotificationCount.textContent = `০টি নতুন`;
+                }
+            });
+        }
+
+        // --- Mobile Slider Menu Logic ---
+        function setupMobileMenuListeners() {
+            if (mobileMenuBtn && mobileSliderMenu && sliderBackdrop) {
+                mobileMenuBtn.addEventListener('click', () => {
+                    mobileSliderMenu.classList.add('active');
+                    sliderBackdrop.classList.remove('hidden');
+                    sliderBackdrop.classList.add('active');
+                    document.body.style.overflow = 'hidden';
+                    mobileMenuBtn.setAttribute('aria-expanded', 'true');
+                });
+
+                const closeSliderMenu = () => {
+                    mobileSliderMenu.classList.remove('active');
+                    sliderBackdrop.classList.remove('active');
+                    setTimeout(() => {
+                        sliderBackdrop.classList.add('hidden');
+                    }, 350);
+                    document.body.style.overflow = '';
+                    mobileMenuBtn.setAttribute('aria-expanded', 'false');
+                };
+
+                sliderBackdrop.addEventListener('click', closeSliderMenu);
+            } else {
+                console.warn("Mobile slider menu elements (mobileMenuBtn, mobileSliderMenu, or sliderBackdrop) not found.");
+            }
+        }
+
+        // Notification Dropdown Logic
+        function setupNotificationDropdownListeners() {
+            if (notificationButton && notificationDropdown) {
+                notificationButton.addEventListener('click', (event) => {
+                    event.stopPropagation();
+                    notificationDropdown.classList.toggle('hidden');
+                });
+
+                document.addEventListener('click', (event) => {
+                    if (!notificationDropdown.contains(event.target) && !notificationButton.contains(event.target)) {
+                        notificationDropdown.classList.add('hidden');
+                    }
+                });
+            }
+        }
+
+        // --- Custom Dropdown Logic ---
+        function setupCustomDropdown(triggerId, optionsId, inputId, defaultText, optionsData, onSelectCallback) {
+            const trigger = document.getElementById(triggerId);
+            const optionsContainer = document.getElementById(optionsId);
+            const hiddenInput = document.getElementById(inputId);
+
+            if (!trigger || !optionsContainer || !hiddenInput) {
+                console.error(`Error: Missing elements for dropdown with triggerId: ${triggerId}`);
+                return;
+            }
+
+            const toggleDropdown = () => {
+                const isActive = optionsContainer.classList.toggle('active');
+                trigger.classList.toggle('active', isActive);
+                // Rotate the chevron icon
+                const chevronIcon = trigger.querySelector('.fa-chevron-down');
+                if (chevronIcon) {
+                    chevronIcon.style.transform = isActive ? 'rotate(180deg)' : 'rotate(0deg)';
+                }
+            };
+
+            const selectOption = (optionElement, value, text) => {
+                // Update hidden input value
+                hiddenInput.value = value;
+                // Update trigger text
+                trigger.querySelector('span').textContent = text;
+                // Highlight selected option
+                Array.from(optionsContainer.children).forEach(child => {
+                    child.classList.remove('selected');
+                });
+                optionElement.classList.add('selected');
+                // Close dropdown
+                toggleDropdown();
+                // Call the callback function
+                if (onSelectCallback) {
+                    onSelectCallback(value);
+                }
+            };
+
+            // Populate options
+            optionsContainer.innerHTML = '';
+            optionsData.forEach(option => {
+                const optionElement = document.createElement('div');
+                optionElement.classList.add('custom-option');
+                optionElement.dataset.value = option.value;
+                optionElement.textContent = option.text;
+                optionsContainer.appendChild(optionElement);
+
+                optionElement.addEventListener('click', () => {
+                    selectOption(optionElement, option.value, option.text);
+                });
+            });
+
+            // Set default value
+            trigger.querySelector('span').textContent = defaultText;
+            
+            // Toggle dropdown on click
+            trigger.addEventListener('click', (event) => {
+                event.stopPropagation(); // Prevent the document click from immediately closing it
+                toggleDropdown();
+            });
+
+            // Close dropdown when clicking outside
+            document.addEventListener('click', (event) => {
+                if (!trigger.contains(event.target) && !optionsContainer.contains(event.target)) {
+                    if (optionsContainer.classList.contains('active')) {
+                        toggleDropdown();
+                    }
+                }
+            });
+        }
+
+        // --- Function to update link field label and placeholder based on sub-category ---
+        function updateLinkFieldUI(selectedCat) {
+            const channelLinkLabel = document.getElementById('channelLinkLabel');
+            const channelLinkInput = document.getElementById('channelLink');
+            
+            let newLabelText = 'লিংক';
+            let newPlaceholderText = 'যেমন: www.youtube.com/... অথবা facebook.com/...';
+
+            // Define specific labels and placeholders based on sub-category for better UX
+            if (selectedCat === 'channel-subscribe') {
+                newLabelText = 'চ্যানেল লিংক';
+                newPlaceholderText = 'যেমন: www.youtube.com/channel/UC...';
+            } else if (['video-view', 'video-like', 'video-comment'].includes(selectedCat)) {
+                newLabelText = 'ভিডিও লিংক';
+                newPlaceholderText = 'যেমন: www.youtube.com/watch?v=...';
+            } else if (['id-page-follow', 'id-page-like'].includes(selectedCat)) {
+                newLabelText = 'আইডি/পেজ লিংক';
+                newPlaceholderText = 'যেমন: www.facebook.com/your-page-or-profile';
+            } else if (['post-react', 'post-comment', 'post-share'].includes(selectedCat)) {
+                newLabelText = 'পোস্ট লিংক';
+                newPlaceholderText = 'যেমন: www.facebook.com/user/posts/...';
+            }
+            
+            if (channelLinkLabel) channelLinkLabel.textContent = newLabelText;
+            if (channelLinkInput) channelLinkInput.placeholder = newPlaceholderText;
+        }
+
+        // --- Function to update target dropdown based on sub-category ---
+        function updateTargetFieldUI(selectedCat) {
+            const targetContainer = document.getElementById('subscribeTargetContainer');
+            const targetLabel = document.getElementById('subscribeTargetLabel');
+
+            let defaultLabelText = 'টার্গেট নির্বাচন করুন';
+            let targetLabelText = '';
+            let unitText = '';
+
+            // Map sub-category to target unit text
+            const unitMap = {
+                'channel-subscribe': 'সাবস্ক্রাইব',
+                'video-view': 'ভিউ',
+                'video-like': 'লাইক',
+                'video-comment': 'কমেন্ট',
+                'id-page-follow': 'ফলো',
+                'id-page-like': 'লাইক',
+                'post-react': 'রিয়েক্ট',
+                'post-comment': 'কমেন্ট',
+                'post-share': 'শেয়ার'
+            };
+            
+            unitText = unitMap[selectedCat];
+
+            if (unitText) {
+                targetLabelText = `${unitText} টার্গেট`;
+                if (targetContainer) targetContainer.classList.remove('hidden');
+            } else {
+                targetLabelText = defaultLabelText;
+                if (targetContainer) targetContainer.classList.add('hidden');
+            }
+            
+            if (targetLabel) targetLabel.textContent = targetLabelText;
+            
+            // Generate dynamic options for the dropdown
+            const targetValues = [10, 20, 50, 100];
+            const targetOptionsData = targetValues.map(value => ({
+                value: value.toString(),
+                text: `${value} ${unitText || 'ইউনিট'}`
+            }));
+            
+            // Setup the new target dropdown with dynamic options
+            setupCustomDropdown(
+                'subscribeTarget-trigger',
+                'subscribeTarget-options',
+                'subscribeTarget',
+                'একটি টার্গেট নির্বাচন করুন',
+                targetOptionsData,
+                (selectedTarget) => {
+                    console.log('Target selected:', selectedTarget);
+                }
+            );
+        }
+
+        // Main dynamic dropdown setup function
+        function setupDynamicDropdowns() {
+            const categoryContainer = document.getElementById('categoryContainer');
+            
+            // Changed category to platform for UI
+            const allPlatforms = [
+                { value: 'youtube', text: 'ইউটিউব' },
+                { value: 'facebook', text: 'ফেসবুক' }
+            ];
+
+            // Changed subCategories to categories for UI
+            const categories = {
+                youtube: [
+                    { value: 'channel-subscribe', text: 'চ্যানেল সাবস্ক্রাইব' },
+                    { value: 'video-view', text: 'ভিডিও ভিউ' },
+                    { value: 'video-like', text: 'ভিডিও লাইক' },
+                    { value: 'video-comment', text: 'ভিডিও কমেন্ট' }
+                ],
+                facebook: [
+                    { value: 'id-page-follow', text: 'আইডি/পেজ ফলো' },
+                    { value: 'id-page-like', text: 'আইডি/পেজ লাইক' },
+                    { value: 'post-react', text: 'পোস্টে রিয়েক্ট' },
+                    { value: 'post-comment', text: 'পোস্টে কমেন্ট' },
+                    { value: 'post-share', text: 'পোস্ট শেয়ার' }
+                ]
+            };
+
+            const populateCategories = (selectedPlatform) => {
+                const categoryOptionsData = selectedPlatform in categories ? categories[selectedPlatform] : [];
+                
+                if (categoryOptionsData.length > 0) {
+                    categoryContainer.classList.remove('hidden');
+                    setupCustomDropdown(
+                        'category-trigger',
+                        'category-options',
+                        'category',
+                        'একটি ক্যাটাগরি নির্বাচন করুন',
+                        categoryOptionsData,
+                        (selectedCat) => {
+                            // সাব-ক্যাটাগরি নির্বাচনের পর লিংকের লেবেল এবং প্লেসহোল্ডার পরিবর্তন করুন
+                            updateLinkFieldUI(selectedCat);
+                            // সাব-ক্যাটাগরি নির্বাচনের পর টার্গেট ড্রপডাউন আপডেট করুন
+                            updateTargetFieldUI(selectedCat);
+                            console.log('Category selected:', selectedCat);
+                        }
+                    );
+                } else {
+                    categoryContainer.classList.add('hidden');
+                    // Reset category input
+                    document.getElementById('category').value = '';
+                    // যখন ক্যাটাগরি লুকানো হবে তখন লেবেল এবং প্লেসহোল্ডার রিসেট করুন
+                    updateLinkFieldUI('');
+                    // যখন ক্যাটাগরি লুকানো হবে তখন টার্গেট ড্রপডাউন লুকানো হবে
+                    updateTargetFieldUI('');
+                }
+            };
+            
+            // Setup main platform dropdown initially
+            setupCustomDropdown(
+                'platform-trigger',
+                'platform-options',
+                'platform',
+                'একটি প্ল্যাটফর্ম নির্বাচন করুন',
+                allPlatforms,
+                populateCategories // Pass the category population function as a callback
+            );
+
+            // Initial UI setup on page load
+            updateLinkFieldUI('');
+            updateTargetFieldUI('');
+        }
+        
+        // Function to validate link based on platform only, with a simplified check
+        function validateLink(platform, link) {
+            // Convert link to lowercase for case-insensitive checking
+            const lowerCaseLink = link.toLowerCase();
+
+            if (platform === 'youtube') {
+                return lowerCaseLink.includes('youtube.com') || lowerCaseLink.includes('youtu.be');
+            } else if (platform === 'facebook') {
+                return lowerCaseLink.includes('facebook.com') || lowerCaseLink.includes('fb.com') || lowerCaseLink.includes('mbasic.facebook.com') || lowerCaseLink.includes('web.facebook.com');
+            }
+            // Default to true if no specific validation rule is found
+            return true;
+        }
+
+        // --- Form Submission Logic ---
+        function setupOrderFormSubmission() {
+            const orderForm = document.getElementById('orderForm');
+            const submitButton = document.getElementById('submitButton');
+            const statusMessageContainer = document.getElementById('statusMessageContainer');
+            const statusMessage = document.getElementById('statusMessage');
+
+            if (!orderForm || !submitButton || !statusMessageContainer || !statusMessage) {
+                console.error("ফর্মের প্রয়োজনীয় উপাদান খুঁজে পাওয়া যায়নি।");
+                return;
+            }
+
+            orderForm.addEventListener('submit', async (e) => {
+                e.preventDefault(); // Prevents default form submission
+
+                // Disable submit button and show loading state
+                const originalSubmitButtonText = submitButton.textContent;
+                submitButton.disabled = true;
+                submitButton.innerHTML = `<i class="fas fa-spinner fa-spin mr-2"></i> সাবমিট হচ্ছে...`;
+                submitButton.classList.remove('bg-blue-600', 'hover:bg-blue-700');
+                submitButton.classList.add('bg-blue-400');
+
+                // Ensure user is logged in
+                const user = auth.currentUser;
+                if (!user) {
+                    showStatusMessage('আপনার অর্ডার জমা দিতে দয়া করে লগইন করুন।', 'error', submitButton, originalSubmitButtonText);
+                    return;
+                }
+
+                // Get values directly from the hidden input fields
+                const platform = document.getElementById('platform').value;
+                const category = document.getElementById('category').value;
+                const link = document.getElementById('channelLink').value;
+                const target = document.getElementById('subscribeTarget').value;
+                const title = document.getElementById('title').value;
+                const description = document.getElementById('description').value;
+
+                // Simple form validation
+                if (!platform) {
+                    showStatusMessage('দয়া করে একটি প্ল্যাটফর্ম নির্বাচন করুন।', 'error', submitButton, originalSubmitButtonText);
+                    return;
+                }
+                if (!category) {
+                    showStatusMessage('দয়া করে একটি ক্যাটাগরি নির্বাচন করুন।', 'error', submitButton, originalSubmitButtonText);
+                    return;
+                }
+                if (!link.trim()) {
+                    showStatusMessage('দয়া করে একটি বৈধ লিংক দিন।', 'error', submitButton, originalSubmitButtonText);
+                    return;
+                }
+                if (!title.trim()) {
+                    showStatusMessage('দয়া করে একটি শিরোনাম দিন।', 'error', submitButton, originalSubmitButtonText);
+                    return;
+                }
+                if (!description.trim()) {
+                    showStatusMessage('দয়া করে সম্পূর্ণ করার নিয়ম লিখুন।', 'error', submitButton, originalSubmitButtonText);
+                    return;
+                }
+                if (!target) {
+                    showStatusMessage('দয়া করে একটি টার্গেট নির্বাচন করুন।', 'error', submitButton, originalSubmitButtonText);
+                    return;
+                }
+
+                try {
+                    // Validate link based on platform only with simplified check
+                    if (!validateLink(platform, link)) {
+                        let errorMessage = 'আপনার দেওয়া লিংকটি ভুল ফরম্যাটের।';
+                        if (platform === 'youtube') {
+                            errorMessage += ' অনুগ্রহ করে একটি ইউটিউব লিংক দিন (যেমন: youtube.com অথবা youtu.be)।';
+                        } else if (platform === 'facebook') {
+                            errorMessage += ' অনুগ্রহ করে একটি ফেসবুক লিংক দিন (যেমন: facebook.com অথবা fb.com)।';
+                        }
+                        showStatusMessage(errorMessage, 'error', submitButton, originalSubmitButtonText);
+                        return; // Stop form submission if validation fails
+                    }
+                    
+                    // Fetch user's display name directly from auth object
+                    const userName = user.displayName || user.email || 'Anonymous User';
+
+                    const orderData = {
+                        userId: user.uid,
+                        userName: userName,
+                        platform: platform,
+                        category: category,
+                        target: parseInt(target),
+                        link: link,
+                        title: title,
+                        description: description,
+                        status: 'pending', // Initial status
+                        timestamp: serverTimestamp() // Current server timestamp
+                    };
+
+                    // Push data to Firebase Realtime Database
+                    const newOrderRef = await push(ref(db, 'orders'), orderData);
+                    console.log("নতুন অর্ডার সফলভাবে জমা হয়েছে, ID:", newOrderRef.key);
+
+                    // Show success message and reset the form
+                    showStatusMessage('আপনার অর্ডার সফলভাবে জমা হয়েছে!', 'success', submitButton, originalSubmitButtonText);
+                    orderForm.reset();
+                    // Reset dropdowns and other UI elements
+                    setupDynamicDropdowns();
+
+                } catch (error) {
+                    console.error("অর্ডার জমা দেওয়ার সময় একটি ত্রুটি ঘটেছে:", error);
+                    showStatusMessage('অর্ডার জমা দেওয়ার সময় একটি ত্রুটি ঘটেছে। আবার চেষ্টা করুন।', 'error', submitButton, originalSubmitButtonText);
+                }
+            });
+
+            // Function to show status message
+            function showStatusMessage(message, type, button, originalText) {
+                statusMessage.textContent = message;
+                statusMessageContainer.classList.remove('hidden', 'bg-red-500', 'bg-green-500');
+                if (type === 'success') {
+                    statusMessageContainer.classList.add('bg-green-500');
+                } else if (type === 'error') {
+                    statusMessageContainer.classList.add('bg-red-500');
+                }
+                // Hide the message and reset button after a few seconds
+                setTimeout(() => {
+                    statusMessageContainer.classList.add('hidden');
+                    button.disabled = false;
+                    button.textContent = originalText;
+                    button.classList.remove('bg-blue-400');
+                    button.classList.add('bg-blue-600', 'hover:bg-blue-700');
+                }, 5000);
+            }
+        }
+
+        // Initial setup on DOMContentLoaded
+        document.addEventListener('DOMContentLoaded', () => {
+            getHeaderElements(); // Get references to the elements after they are in the DOM
+            setupSignInCardListener();
+            setupMobileMenuListeners();
+            setupNotificationDropdownListeners();
+            setupDynamicDropdowns(); // Call the new function for custom dynamic dropdowns
+            loadUserDataFromFirebase();
+            loadAllNotificationsForUI();
+            setupOrderFormSubmission(); // Add new form submission logic
+        });
+    </script>
+</body>
+</html>
+

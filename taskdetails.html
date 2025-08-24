@@ -1,0 +1,1130 @@
+<!DOCTYPE html>
+<html lang="bn">
+ <head>
+  <meta charset="utf-8"/>
+  <meta content="width=device-width, initial-scale=1" name="viewport"/>
+  <title>
+   Water Drop Theme Dashboard
+  </title>
+  <script src="https://cdn.tailwindcss.com">
+  </script>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css" rel="stylesheet"/>
+  <link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri&amp;display=swap" rel="stylesheet"/>
+  <style>
+   body {
+      font-family: 'Hind Siliguri', sans-serif;
+      overflow-x: hidden; /* নিশ্চিত করে যে সাইডবারের কারণে কোনো আনুভূমিক স্ক্রলবার না আসে */
+    }
+    /* Skeleton Loading Styles for cards */
+    .skeleton-card {
+      background-color: #f3f4f6; /* gray-100 */
+      overflow: hidden;
+      position: relative;
+    }
+
+    .shimmer {
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(to right, #f3f4f6 8%, #e5e7eb 18%, #f3f4f6 33%); /* gray-100, gray-200 */
+      background-size: 800px 104px;
+      position: absolute;
+      top: 0;
+      left: -800px; /* Start off-screen to the left */
+      animation: shimmer 1.5s infinite linear;
+    }
+
+    @keyframes shimmer {
+      0% {
+        left: -800px;
+      }
+      100% {
+        left: 800px;
+      }
+    }
+
+    .skeleton-line {
+      background-color: #e5e7eb; /* gray-200 */
+      border-radius: 4px;
+      position: relative;
+      overflow: hidden;
+    }
+    .skeleton-circle {
+        background-color: #e5e7eb; /* gray-200 */
+        border-radius: 50%;
+        position: relative;
+        overflow: hidden;
+    }
+
+    /* প্রোফাইল ছবির জন্য স্টাইল */
+    #header-profile-logo {
+        width: 48px; /* লোগোর আকারের সাথে মিলিয়ে */
+        height: 48px; /* লোগোর আকারের সাথে মিলিয়ে */
+        border-radius: 50%; /* গোলাকার */
+        border: 2px solid #007bff; /* উদাহরণ বর্ডার */
+        object-fit: cover;
+    }
+    /* মোবাইল স্লাইড-আউট মেনুর জন্য স্টাইল */
+    #mobileSliderMenu {
+        position: fixed;
+        top: 0;
+        right: -280px; /* লুকানো অবস্থায় */
+        width: 280px; /* সাইডবারের প্রস্থ */
+        height: 100%;
+        background-color: #ffffff; /* সাদা ব্যাকগ্রাউন্ড */
+        box-shadow:
+          -8px 0 15px rgba(0, 0, 0, 0.15),
+          inset 4px 0 8px rgba(255, 255, 255, 0.6);
+        z-index: 1000; /* নিশ্চিত করে এটি সবকিছুর উপরে থাকে */
+        transition: right 0.35s cubic-bezier(0.4, 0, 0.2, 1); /* মসৃণ স্লাইড অ্যানিমেশন */
+        padding-top: 5rem; /* হেডারের উচ্চতা অনুযায়ী */
+        display: flex;
+        flex-direction: column;
+        border-top-left-radius: 1rem;
+        border-bottom-left-radius: 1rem;
+        backdrop-filter: saturate(180%) blur(12px);
+        -webkit-backdrop-filter: saturate(180%) blur(12px);
+    }
+
+    #mobileSliderMenu.active {
+        right: 0; /* দৃশ্যমান অবস্থায় */
+        box-shadow:
+          -12px 0 25px rgba(0, 0, 0, 0.25),
+          inset 4px 0 12px rgba(255, 255, 255, 0.7);
+    }
+
+    #sliderMenuContent {
+        flex-grow: 1; /* মেনু আইটেমগুলোকে ফাঁকা স্থান পূরণ করতে দেয় */
+        padding: 1.5rem 0;
+        display: flex;
+        flex-direction: column;
+        gap: 0.75rem;
+    }
+
+    #sliderMenuContent .menu-item {
+        display: flex;
+        align-items: center;
+        padding: 0.75rem 1.75rem;
+        color: #4338ca; /* indigo-700 */
+        font-weight: 600; /* font-semibold */
+        font-size: 1.125rem; /* text-lg */
+        border-radius: 0.75rem;
+        transition: background-color 0.3s ease, color 0.3s ease, transform 0.2s ease;
+        text-decoration: none; /* আন্ডারলাইন সরাচ্ছে */
+        box-shadow: 0 0 0 0 transparent;
+        user-select: none;
+        position: relative;
+        overflow: hidden;
+    }
+
+    #sliderMenuContent .menu-item::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 0;
+      height: 100%;
+      width: 4px;
+      background: #4338ca;
+      border-top-right-radius: 0.75rem;
+      border-bottom-right-radius: 0.75rem;
+      transform: scaleY(0);
+      transform-origin: center;
+      transition: transform 0.3s ease;
+      z-index: 1;
+    }
+
+    #sliderMenuContent .menu-item:hover::before,
+    #sliderMenuContent .menu-item:focus-visible::before {
+      transform: scaleY(1);
+    }
+
+    #sliderMenuContent .menu-item:hover {
+        background-color: #4338ca; /* indigo-700 */
+        color: #e0e7ff; /* indigo-100 */
+        transform: translateX(6px);
+        box-shadow: 0 8px 15px rgba(67, 56, 202, 0.3);
+        z-index: 10;
+        outline: none;
+    }
+
+    #sliderMenuContent .menu-item:focus-visible {
+        outline: 2px solid #4338ca;
+        outline-offset: 2px;
+    }
+
+    /* ওভারলে ব্যাকড্রপ */
+    #sliderBackdrop {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.45); /* গাঢ় ব্যাকড্রপ */
+        z-index: 999; /* স্লাইডারের নিচে থাকে */
+        opacity: 0;
+        visibility: hidden;
+        transition: opacity 0.35s cubic-bezier(0.4, 0, 0.2, 1), visibility 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+        backdrop-filter: blur(2px);
+        -webkit-backdrop-filter: blur(2px);
+    }
+
+    #sliderBackdrop.active {
+        opacity: 1;
+        visibility: visible;
+    }
+
+    /* নোটিফিকেশন ড্রপডাউনের জন্য নতুন স্টাইল - তীর চিহ্ন (caret) */
+    #notificationDropdown::before {
+        content: '';
+        position: absolute;
+        top: -10px; /* ড্রপডাউন থেকে উপরের দিকে */
+        right: 18px; /* নোটিফিকেশন বাটনের সাথে সামঞ্জস্যপূর্ণ */
+        border-width: 0 10px 10px 10px; /* একটি ত্রিভুজ তৈরি করে */
+        border-color: transparent transparent white transparent; /* সাদা ত্রিভুজ */
+        filter: drop-shadow(0 -2px 1px rgba(0,0,0,0.05)); /* হালকা শ্যাডো */
+        z-index: 51; /* ড্রপডাউনের উপরে থাকবে */
+    }
+
+    #notificationDropdown::after {
+        content: '';
+        position: absolute;
+        top: -11px; /* বর্ডারের জন্য 1px উপরে */
+        right: 343px; /* নোটিফিকেশন বাটনের সাথে সামঞ্জস্যপূর্ণ */
+        border-width: 0 10px 10px 10px;
+        border-color: transparent transparent #e2e8f0 transparent; /* বর্ডারের রঙ */
+        z-index: 50; /* ড্রপডাউনের উপরে কিন্তু সাদা ত্রিভুজের নিচে থাকবে */
+    }
+
+    /* মোবাইল স্ক্রিনের জন্য নোটিফিকেশন ড্রপডাউনের পজিশন সামঞ্জস্য (যদি প্রয়োজন হয়) */
+    @media (max-width: 639px) { /* sm ব্রেকপয়েন্টের নিচে */
+        #notificationDropdown::before,
+        #notificationDropdown::after {
+            right: 25px; /* ছোট স্ক্রিনে নোটিফিকেশন বাটনের অবস্থানের সাথে সামঞ্জস্য */
+        }
+    }
+    /* স্পিনারের জন্য অতিরিক্ত স্টাইল */
+    .spinner {
+      border: 2px solid rgba(0, 0, 0, 0.1);
+      border-left-color: #4f46e5; /* indigo-600 */
+      border-radius: 50%;
+      width: 16px;
+      height: 16px;
+      animation: spin 1s linear infinite;
+    }
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    /* Cloudinary আপলোড অংশের জন্য অতিরিক্ত স্টাইল */
+    #uploadContainer {
+        border: 2px dashed #007bff;
+        padding: 30px;
+        text-align: center;
+        cursor: pointer;
+        margin-bottom: 20px;
+        background-color: #fff;
+        border-radius: 8px;
+        transition: background-color 0.3s ease;
+    }
+    #uploadContainer:hover {
+        background-color: #e9f5ff;
+    }
+    #uploadButton {
+        background-color: #28a745;
+        color: white;
+        padding: 12px 25px;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+        font-size: 16px;
+        transition: background-color 0.3s ease;
+        width: 100%; /* বাটনকে পুরো প্রস্থ জুড়তে */
+        margin-top: 20px; /* ফর্মের নিচের স্পেসের জন্য */
+    }
+    #uploadButton:hover {
+        background-color: #218838;
+    }
+    /* সফল বা ত্রুটির মেসেজের জন্য বাটনের নতুন স্টাইল */
+    .upload-success-btn {
+        background-color: #28a745 !important; /* সবুজ */
+    }
+    .upload-error-btn {
+        background-color: #dc3545 !important; /* লাল */
+    }
+    .upload-processing-btn {
+        background-color: #007bff !important; /* নীল, বাটন যখন লোড হচ্ছে */
+    }
+
+    #imagePreview {
+        max-width: 100%;
+        height: auto;
+        display: block;
+        margin-top: 20px;
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    }
+    #message, #error {
+        margin-top: 15px;
+        padding: 10px;
+        border-radius: 5px;
+        display: none; /* প্রাথমিকভাবে লুকানো থাকবে */
+        font-weight: bold;
+    }
+    #message {
+        background-color: #d4edda;
+        color: #155724;
+        border: 1px solid #c3e6cb;
+    }
+    #error {
+        background-color: #f8d7da;
+        color: #721c24;
+        border: 1px solid #f5c6cb;
+    }
+    /* লগইন/লগআউট বাটনের জন্য নতুন স্টাইল */
+    .btn-login {
+        background-color: #22c55e; /* green-500 */
+        color: white;
+    }
+    .btn-login:hover {
+        background-color: #16a34a; /* green-600 */
+    }
+    .btn-login:focus {
+        outline: none;
+        box-shadow: 0 0 0 2px #4ade80, 0 0 0 4px rgba(34, 197, 94, 0.5); /* green-300 ring */
+    }
+
+    .btn-logout {
+        background-color: #ef4444; /* red-500 */
+        color: white;
+    }
+    .btn-logout:hover {
+        background-color: #dc2626; /* red-600 */
+    }
+    .btn-logout:focus {
+        outline: none;
+        box-shadow: 0 0 0 2px #f87171, 0 0 0 4px rgba(239, 68, 68, 0.5); /* red-300 ring */
+    }
+  </style>
+ </head>
+ <body class="bg-gradient-to-b from-cyan-100 to-blue-200 min-h-screen flex flex-col">
+  <!-- Header Section - Content from the provided dashboard header -->
+  <header class="bg-white shadow-xl sticky top-0 z-50 border-b border-gray-200">
+   <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 flex items-center justify-between">
+    <div class="flex items-center space-x-3 sm:space-x-4">
+     <img alt="প্রোফাইল ছবি"
+          class="w-10 h-10 sm:w-12 sm:h-12 rounded-full border-2 border-indigo-500 shadow-md"
+          loading="lazy"
+          src="https://i.pravatar.cc/300?img=1"
+          id="header-profile-logo"/>
+     <div class="hidden sm:block">
+      <p id="welcomeMessage" class="text-gray-700 font-semibold text-base sm:text-lg leading-tight select-none">Your Name</p>
+      <p class="text-gray-500 text-xs sm:text-sm select-none">আপনার প্রোফাইল</p>
+     </div>
+     <h1 class="text-2 sm:text-3xl font-extrabold text-indigo-600 tracking-wide select-none ml-4 sm:ml-6">
+      <span>Order</span>
+     </h1>
+    </div>
+
+    <div class="flex items-center space-x-3 sm:space-x-4">
+      <div class="flex items-center space-x-3">
+        <div id="userPointsCard" aria-label="আপনার পয়েন্ট"
+            class="flex items-center bg-indigo-50 text-indigo-700 font-semibold px-2 py-1 rounded-full shadow select-none text-xs scale-90 hidden">
+          <i class="fas fa-coins mr-1 text-yellow-400 text-sm"></i>
+          <span id="userPointsDisplay">0 Points</span>
+        </div>
+
+        <div id="signInStatusCard" aria-label="সাইন-ইন স্ট্যাটাস"
+            class="flex items-center bg-red-50 text-red-700 font-semibold px-2 py-1 rounded-full shadow select-none text-xs scale-90 hidden cursor-pointer">
+          <i class="fas fa-user-circle mr-1 text-red-500 text-sm"></i>
+          <span id="signInStatusDisplay">লগইন করুন</span>
+        </div>
+
+        <div id="loadingStatusCard" class="flex items-center bg-gray-100 text-gray-600 font-semibold px-2 py-1 rounded-full shadow select-none text-xs scale-90">
+            <div class="spinner mr-2"></div>
+            <span>লোড হচ্ছে...</span>
+        </div>
+      </div>
+
+     <button id="notificationButton" aria-label="নোটিফিকেশন"
+             class="relative text-indigo-600 hover:text-indigo-800 transition focus:outline-none">
+       <i class="fas fa-bell text-lg sm:text-xl"></i>
+       <span class="absolute -top-1 -right-1 sm:-top-2 sm:-right-2 bg-red-600 text-white text-xs rounded-full px-1 sm:px-1.5 shadow-lg" id="notificationCountDisplay">0</span>
+     </button>
+
+     <div id="notificationDropdown" class="absolute top-16 right-4 sm:right-6 md:right-10 bg-white border border-gray-200 rounded-lg shadow-lg w-64 md:w-80 z-50 hidden">
+       <div class="px-4 py-3 border-b border-gray-200 flex justify-between items-center">
+         <h3 class="font-semibold text-gray-800">নোটিফিকেশনস</h3>
+         <span class="text-xs text-gray-500" id="newNotificationCount">০টি নতুন</span>
+       </div>
+       <div class="py-2 max-h-60 overflow-y-auto" id="notificationList">
+         </div>
+       <div class="px-4 py-3 border-t border-gray-200 text-center">
+         <a href="#" class="text-sm text-blue-600 hover:text-blue-800 font-medium">সকল নোটিফিকেশন দেখুন</a>
+       </div>
+     </div>
+     <button id="mobileMenuBtn" aria-label="মেনু"
+             aria-controls="mobileSliderMenu"
+             aria-expanded="false"
+             class="md:hidden text-indigo-600 hover:text-indigo-800 text-xl sm:text-2xl focus:outline-none">
+       <i class="fas fa-bars"></i>
+     </button>
+
+     <nav aria-label="প্রধান নেভিগেশন"
+          class="hidden md:flex items-center space-x-6 lg:space-x-8 text-indigo-600 font-semibold select-none text-base"
+          role="navigation">
+      <a class="hover:text-indigo-800 transition" href="dashboard.html">ড্যাশবোর্ড</a>
+      <a class="hover:text-indigo-800 transition" href="mytasklist.html">টাস্ক</a>
+      <a class="hover:text-indigo-800 transition" href="leaderboard.html">লিডারবোর্ড</a>
+      <a class="hover:text-indigo-800 transition" href="order.html">অর্ডার</a>
+     </nav>
+    </div>
+   </div>
+
+   <div id="mobileSliderMenu" role="menu" aria-label="মোবাইল স্লাইডার মেনু">
+     <div class="flex items-center space-x-3 p-4 border-b border-gray-200 mb-4">
+       <img alt="স্লাইডার প্রোফাইল ছবি"
+            class="w-16 h-16 rounded-full border-2 border-indigo-500 shadow-md"
+            loading="lazy"
+            src="https://i.pravatar.cc/300?img=1"
+            id="slider-profile-pic"/>
+       <div>
+         <p id="sliderUserName" class="text-gray-700 font-semibold text-lg leading-tight">Your Name</p>
+         <p class="text-gray-500 text-sm">আপনার প্রোফাইল</p>
+       </div>
+     </div>
+        <div id="sliderMenuContent" role="none">
+          <a class="menu-item" href="dashboard.html" role="menuitem" tabindex="0">ড্যাশবোর্ড</a>
+          <a class="menu-item" href="mytasklist.html" role="menuitem" tabindex="0">আমার টাস্ক</a>
+          <a class="menu-item" href="completedtask.html" role="menuitem" tabindex="0">সম্পূর্ণ করা টাস্ক</a>
+          <a class="menu-item" href="order.html" role="menuitem" tabindex="0">অর্ডার করুন</a>
+          <a class="menu-item" href="reffer.html" role="menuitem" tabindex="0">রেফার করুন</a>
+          <a class="menu-item" href="leaderboard.html" role="menuitem" tabindex="0">লিডারবোর্ড</a>
+        </div>
+     <div class="p-4 mt-auto border-t border-gray-200">
+        <button id="loginLogoutButton" class="w-full py-2 px-4 rounded-md font-semibold transition-colors duration-200
+                                                focus:outline-none focus:ring-2 focus:ring-offset-2">
+            লগইন করুন
+        </button>
+     </div>
+   </div>
+   <div id="sliderBackdrop" class="hidden" tabindex="-1" aria-hidden="true"></div>
+  </header>
+
+  <main class="flex-grow max-w-4xl mx-auto px-6 py-10 w-full mt-[80px]">
+   <section class="bg-white bg-opacity-80 backdrop-blur-md rounded-xl shadow-lg p-8">
+    <div id="task-details-content">
+        <div class="text-center text-blue-700 animate-pulse">
+            লোড হচ্ছে...
+        </div>
+    </div>
+
+    <form class="space-y-6 mt-8 pt-6 border-t border-gray-200" id="task-submit-form" novalidate="">
+        <h2 class="text-2xl font-extrabold text-cyan-700 mb-4">
+            টাস্ক সাবমিট করুন
+        </h2>
+        <div>
+            <label class="block mb-2 font-semibold text-cyan-700" for="fileInput">
+                স্কিনশট জমা দিন
+            </label>
+            <input accept="image/*" class="block w-full text-gray-700 border border-cyan-300 rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-cyan-400" id="fileInput" name="file" required type="file" style="display: none;"/>
+            
+            <div id="uploadContainer" class="border-2 border-dashed border-cyan-300 rounded-md p-4 text-center cursor-pointer hover:bg-cyan-50">
+                <p class="text-gray-600">ছবি আপলোড করতে এখানে ক্লিক করুন বা টেনে আনুন</p>
+            </div>
+        </div>
+        
+        <div id="message"></div>
+        <div id="error"></div>
+
+        <h2 class="text-2xl font-semibold text-cyan-700 mt-8 mb-4" id="imagePreviewText" style="display: none;">আপলোড করা ছবি</h2>
+        <img id="imagePreview" src="" alt="আপলোড করা ছবি প্রিভিউ" style="display: none;">
+
+        <div>
+            <label class="block mb-2 font-semibold text-cyan-700" for="submissionText">
+                প্রয়োজনীয় লেখা (ঐচ্ছিক)
+            </label>
+            <textarea id="submissionText" name="submissionText" rows="2" class="block w-full text-gray-700 border border-cyan-300 rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-cyan-400" placeholder="আপনার সাবমিশন সম্পর্কে কিছু লিখুন..."></textarea>
+        </div>
+
+        <button id="uploadButton" class="w-full bg-cyan-600 hover:bg-cyan-700 text-white font-bold py-3 rounded-lg shadow-md transition" type="button">
+            সাবমিট করুন
+        </button>
+     </form>
+   </section>
+  </main>
+  <footer class="bg-cyan-600 text-white py-6 mt-12">
+   <div class="max-w-5xl mx-auto px-6 text-center text-sm">
+    © ২০২৪ WaterDrop. সর্বস্বত্ব সংরক্ষিত।
+   </div>
+  </footer>
+<script type="module">
+    // Firebase Modules
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-app.js";
+    // Realtime Database modules
+    import { getDatabase, ref, get, child, update, push, set } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-database.js"; 
+    import { getAuth, onAuthStateChanged, signOut, signInAnonymously } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-auth.js"; // Auth Module যোগ করা হয়েছে
+
+    // Firebase Configuration
+    const firebaseConfig = {
+        apiKey: "AIzaSyAC4h55aA0Zz--V5ejyndzR5WC_-9rAPio",
+        authDomain: "subscribe-bot-6f9b2.firebaseapp.com",
+        databaseURL: "https://subscribe-bot-6f9b2-default-rtdb.firebaseio.com", // Realtime Database ব্যবহার করা হয়েছে
+        projectId: "subscribe-bot-6f9b2",
+        storageBucket: "subscribe-bot-6f9b2.firebasestorage.app",
+        messagingSenderId: "141787931031",
+        appId: "1:141787931031:web:2108a3e930f5ce4fbc64d2",
+        measurementId: "G-HSDKCJB14Y"
+    };
+
+    // Initialize Firebase
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app); // Realtime Database ব্যবহার করা হয়েছে
+    const auth = getAuth(app); // Auth ইনিশিয়ালাইজ করা হয়েছে
+
+    const taskDetailsContent = document.getElementById('task-details-content');
+
+    // Utility Functions (আপনার আগের কোড থেকে)
+    function esc(str = "") {
+        return String(str)
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;");
+    }
+
+    function categoryColor(cat) {
+        const c = (cat || "").toLowerCase();
+        if (c.includes("youtube")) return "bg-red-100 text-red-700 border-red-200";
+        if (c.includes("facebook")) return "bg-blue-100 text-blue-700 border-blue-200";
+        if (c.includes("promo")) return "bg-purple-100 text-purple-700 border-purple-200";
+        if (c.includes("short") || c.includes("video")) return "bg-amber-100 text-amber-700 border-amber-200";
+        if (c.includes("bonus")) return "bg-emerald-100 text-emerald-700 border-emerald-200";
+        return "bg-blue-100 text-blue-700 border-blue-200";
+    }
+
+    // --- টাস্কের বিস্তারিত লোড করার ফাংশন ---
+    async function loadTaskDetails(id) {
+        try {
+            // Realtime Database থেকে 'tasks' পাথের ডেটা আনুন
+            const snapshot = await get(child(ref(db), `tasks/${id}`));
+
+            if (snapshot.exists()) {
+                const task = snapshot.val(); // ডেটা অবজেক্ট হিসেবে পাবেন
+                
+                // টাস্কের ক্যাটাগরি অনুযায়ী লোগো নির্ধারণ করা
+                let channelLogoHTML = `
+                    <div class="w-20 h-20 rounded-full bg-blue-500 border border-blue-700 flex items-center justify-center text-white mx-auto mb-4 text-4xl">
+                        <i class="fas fa-tasks"></i>
+                    </div>
+                `; // Default logo
+                
+                if (task.category && task.category.toLowerCase().includes('youtube')) {
+                    channelLogoHTML = `
+                        <div class="w-20 h-20 rounded-full bg-red-600 border border-red-700 flex items-center justify-center text-white p-2 mx-auto mb-4">
+                            <i class="fab fa-youtube text-4xl"></i>
+                        </div>
+                    `;
+                } else if (task.category && task.category.toLowerCase().includes('facebook')) {
+                    channelLogoHTML = `
+                        <div class="w-20 h-20 rounded-full bg-blue-600 border border-blue-800 flex items-center justify-center text-white p-2 mx-auto mb-4">
+                            <i class="fab fa-facebook-f text-4xl"></i>
+                        </div>
+                    `;
+                }
+
+                taskDetailsContent.innerHTML = `
+                    <div class="text-center mb-6">
+                        ${channelLogoHTML}
+                        <h2 class="text-3xl font-bold text-blue-800 mb-2">${esc(task.title || "শিরোনাম নেই")}</h2>
+                        <span class="inline-block text-lg px-3 py-1 rounded-full border ${categoryColor(task.category)}">
+                            ${esc(task.category || "শ্রেণীবিভাগ নেই")}
+                        </span>
+                    </div>
+                    <div class="space-y-4 text-gray-800">
+                        <div>
+                            <h3 class="text-xl font-semibold mb-2 text-cyan-600">
+                                বর্ণনা
+                            </h3>
+                            <p class="text-lg leading-relaxed">${esc(task.description || "বিস্তারিত বিবরণ নেই।")}</p>
+                        </div>
+                        <div>
+                            <h3 class="text-xl font-semibold mb-2 text-cyan-600">
+                                টার্গেট
+                            </h3>
+                            <p class="text-lg leading-relaxed">সম্পন্ন হয়েছে: <span class="font-bold">${esc(task.completed || "0")}</span> / <span class="font-bold">${esc(task.target || "0")}</span></p>
+                        </div>
+                        <div>
+                            <h3 class="text-xl font-semibold mb-2 text-cyan-600">
+                                আপলোড করেছেন
+                            </h3>
+                            <p class="text-lg leading-relaxed">${esc(task.uploaderName || "Unknown")}</p>
+                        </div>
+                        <div>
+                            <h3 class="text-xl font-semibold mb-2 text-cyan-600">
+                                টাস্ক লিংক
+                            </h3>
+                            <a href="${esc(task.link)}" target="_blank" rel="noopener noreferrer" class="text-lg text-blue-600 hover:underline">
+                                ${esc(task.link || "কোনো লিংক নেই")}
+                            </a>
+                        </div>
+                        <div>
+                            <h3 class="text-xl font-semibold mb-2 text-cyan-600">
+                                কিভাবে টাস্ক সম্পন্ন করবেন
+                            </h3>
+                            <p class="text-lg leading-relaxed">${esc(task.howToComplete || "নির্দেশাবলী নেই।")}</p>
+                        </div>
+                    </div>
+                `;
+            } else {
+                taskDetailsContent.innerHTML = `<p class="text-center text-red-600 text-xl">এই আইডি-তে কোনো টাস্ক পাওয়া যায়নি।</p>`;
+            }
+        } catch (error) {
+            console.error("টাস্কের বিস্তারিত লোড করতে সমস্যা:", error);
+            taskDetailsContent.innerHTML = `<p class="text-center text-red-600 text-xl">ডেটা লোড করতে সমস্যা হয়েছে। অনুগ্রহ করে পরে আবার চেষ্টা করুন।</p>`;
+        }
+    }
+
+    // --- পেজ লোড হওয়ার সাথে সাথে টাস্ক আইডি নিয়ে ডেটা লোড করা ---
+    document.addEventListener('DOMContentLoaded', () => {
+        const urlParams = new URLSearchParams(window.location.search);
+        const taskId = urlParams.get('id');
+
+        if (taskId) {
+            loadTaskDetails(taskId);
+        } else {
+            taskDetailsContent.innerHTML = `<p class="text-center text-red-600 text-xl">কোনো টাস্ক আইডি পাওয়া যায়নি।</p>`;
+        }
+    });
+
+    // --- Cloudinary আপলোড অংশের জন্য JavaScript (আপনার দেওয়া কোড) ---
+    const CLOUDINARY_CLOUD_NAME = 'deqeko2ny';
+    const CLOUDINARY_UPLOAD_PRESET = 'usertaskprove';
+
+    const fileInput = document.getElementById('fileInput');
+    const uploadContainer = document.getElementById('uploadContainer');
+    const uploadButton = document.getElementById('uploadButton');
+    const imagePreview = document.getElementById('imagePreview');
+    const messageElement = document.getElementById('message'); // এইগুলো এখন বাটনের মেসেজ দেখানোর জন্য ব্যবহার হবে না, তবে অন্যান্য ক্ষেত্রে দরকার হতে পারে
+    const errorElement = document.getElementById('error');   // এইগুলো এখন বাটনের মেসেজ দেখানোর জন্য ব্যবহার হবে না, তবে অন্যান্য ক্ষেত্রে দরকার হতে পারে
+    const imagePreviewText = document.getElementById('imagePreviewText'); 
+    const submissionText = document.getElementById('submissionText'); 
+
+    let selectedFile = null;
+
+    uploadContainer.addEventListener('click', () => {
+        fileInput.click();
+    });
+
+    uploadContainer.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        uploadContainer.style.backgroundColor = '#e0e0e0';
+        showMessage('', 'message'); // ড্র্যাগ করার সময় মেসেজ ক্লিয়ার করুন
+        showMessage('', 'error');
+    });
+
+    uploadContainer.addEventListener('dragleave', () => {
+        uploadContainer.style.backgroundColor = 'transparent';
+    });
+
+    uploadContainer.addEventListener('drop', (e) => {
+        e.preventDefault();
+        uploadContainer.style.backgroundColor = 'transparent';
+        const files = e.dataTransfer.files;
+        if (files.length > 0) {
+            selectedFile = files[0];
+            displaySelectedFile();
+        }
+    });
+
+    fileInput.addEventListener('change', (e) => {
+        selectedFile = e.target.files[0];
+        displaySelectedFile();
+    });
+
+    function displaySelectedFile() {
+        if (selectedFile) {
+            // এখানে ফাইল নির্বাচনের মেসেজ দেখাতে পারেন, বাটনে নয়
+            // showMessage(`নির্বাচন করা হয়েছে: ${selectedFile.name}`, 'message'); 
+            errorElement.style.display = 'none';
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                imagePreview.src = e.target.result;
+                imagePreview.style.display = 'block';
+                imagePreviewText.style.display = 'block'; 
+            };
+            reader.readAsDataURL(selectedFile);
+        } else {
+            // এখানে ফাইল নির্বাচন না হওয়ার মেসেজ দেখাতে পারেন, বাটনে নয়
+            // showMessage('কোনো ফাইল নির্বাচন করা হয়নি।', 'error'); 
+            imagePreview.style.display = 'none';
+            imagePreviewText.style.display = 'none'; 
+        }
+        // ফাইল নির্বাচন বা ড্রপ করার পর বাটনের মেসেজ রিসেট করুন
+        resetUploadButton();
+    }
+
+    // এই ফাংশনটি এখন সরাসরি বাটনে মেসেজ দেখাবে না, তবে অন্যান্য UI মেসেজের জন্য ব্যবহার হতে পারে
+    function showMessage(msg, type) {
+        messageElement.style.display = 'none';
+        errorElement.style.display = 'none';
+
+        if (type === 'message') {
+            messageElement.textContent = msg;
+            messageElement.style.display = 'block';
+        } else if (type === 'error') {
+            errorElement.textContent = msg;
+            errorElement.style.display = 'block';
+        }
+    }
+
+    // বাটনের ডিফল্ট অবস্থা রিসেট করার ফাংশন
+    function resetUploadButton() {
+        uploadButton.disabled = false;
+        uploadButton.textContent = 'সাবমিট করুন';
+        uploadButton.className = 'w-full bg-cyan-600 hover:bg-cyan-700 text-white font-bold py-3 rounded-lg shadow-md transition';
+    }
+
+    uploadButton.addEventListener('click', async () => {
+        // প্রাথমিকভাবে বাটনের পূর্বের কোনো মেসেজ থাকলে তা রিসেট করুন
+        resetUploadButton(); 
+
+        if (!selectedFile) {
+            uploadButton.textContent = 'ছবি নির্বাচন করুন!';
+            uploadButton.classList.add('upload-error-btn');
+            setTimeout(resetUploadButton, 3000); // 3 সেকেন্ড পর রিসেট
+            return;
+        }
+
+        const user = auth.currentUser;
+        if (!user) {
+            uploadButton.textContent = 'লগইন করুন!';
+            uploadButton.classList.add('upload-error-btn');
+            setTimeout(resetUploadButton, 3000); // 3 সেকেন্ড পর রিসেট
+            return;
+        }
+
+        const urlParams = new URLSearchParams(window.location.search);
+        const taskId = urlParams.get('id');
+
+        if (!taskId) {
+            uploadButton.textContent = 'টাস্ক আইডি নেই!';
+            uploadButton.classList.add('upload-error-btn');
+            setTimeout(resetUploadButton, 3000); // 3 সেকেন্ড পর রিসেট
+            return; 
+        }
+
+        // প্রক্রিয়া শুরু
+        uploadButton.disabled = true;
+        uploadButton.textContent = 'সাবমিট হচ্ছে...';
+        uploadButton.classList.remove('bg-cyan-600', 'hover:bg-cyan-700'); // ডিফল্ট স্টাইল সরান
+        uploadButton.classList.add('upload-processing-btn'); // প্রসেসিং স্টাইল যোগ করুন
+
+        const formData = new FormData();
+        formData.append('file', selectedFile);
+        formData.append('upload_preset', CLOUDINARY_UPLOAD_PRESET);
+
+        try {
+            const response = await fetch(`https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/image/upload`, {
+                method: 'POST',
+                body: formData,
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(`Cloudinary Error: ${errorData.error.message || response.statusText}`);
+            }
+
+            const data = await response.json();
+            console.log('ছবি আপলোড সফল:', data);
+
+            const imageUrl = data.secure_url;
+            const submissionContent = submissionText.value.trim();
+
+            const userSubmissionRef = ref(db, `submissions/${user.uid}/${taskId}`);
+            const newSubmissionRef = push(userSubmissionRef); 
+
+            await set(newSubmissionRef, {
+                imageUrl: imageUrl,
+                submissionText: submissionContent,
+                timestamp: Date.now(),
+                taskId: taskId, 
+                status: 'pending' 
+            });
+
+            // নতুন কোড: সাবমিশন কাউন্টার আপডেট করা
+            const taskRef = ref(db, `tasks/${taskId}`);
+            const taskSnapshot = await get(taskRef);
+            let currentSubmissionCount = 0;
+            let currentTarget = 0;
+
+            if (taskSnapshot.exists()) {
+                const taskData = taskSnapshot.val();
+                currentSubmissionCount = taskData.completed || 0;
+                currentTarget = taskData.target || 0;
+            }
+
+            // যদি বর্তমান সম্পন্ন হওয়া টার্গেট, মোট টার্গেটের চেয়ে কম হয়, তাহলে আপডেট করুন।
+            if(currentSubmissionCount < currentTarget) {
+                 await update(taskRef, {
+                    completed: currentSubmissionCount + 1
+                });
+                console.log(`টাস্ক ${taskId} এর জন্য সাবমিশন কাউন্টার আপডেট করা হয়েছে: ${currentSubmissionCount + 1}`);
+            }
+
+            console.log('ছবি ও লেখা সফলভাবে Firebase এ সেভ হয়েছে!');
+            uploadButton.textContent = 'সফল!';
+            uploadButton.classList.remove('upload-processing-btn');
+            uploadButton.classList.add('upload-success-btn');
+            
+            // সফলভাবে জমা দেওয়ার পর ফর্ম রিসেট করুন
+            selectedFile = null;
+            fileInput.value = ''; 
+            imagePreview.src = '';
+            imagePreview.style.display = 'none';
+            imagePreviewText.style.display = 'none';
+            submissionText.value = ''; 
+
+            setTimeout(resetUploadButton, 3000); // 3 সেকেন্ড পর বাটন রিসেট
+
+        } catch (err) {
+            console.error('সাবমিশন ব্যর্থ:', err);
+            uploadButton.textContent = 'ব্যর্থ!';
+            uploadButton.classList.remove('upload-processing-btn');
+            uploadButton.classList.add('upload-error-btn');
+            setTimeout(resetUploadButton, 3000); // 3 সেকেন্ড পর বাটন রিসেট
+        } finally {
+            // এখানে বাটন রিসেট করা হচ্ছে না কারণ setTimeout ব্যবহার করা হয়েছে
+            // setTimeout() দিয়ে রিসেট করার ফলে সফল বা ব্যর্থ মেসেজ কিছু সময় থাকবে।
+        }
+    });
+
+    // --- হেডার লজিক (dashboard.html থেকে কপি করা) ---
+    const headerProfileLogo = document.getElementById('header-profile-logo');
+    const DEFAULT_PROFILE_PIC_URL = 'https://raw.githubusercontent.com/Tech-Jobayer/Website/blob/main/data/images.png'; // Updated URL
+    const userPointsCard = document.getElementById('userPointsCard');
+    const userPointsDisplay = document.getElementById('userPointsDisplay');
+    const signInStatusCard = document.getElementById('signInStatusCard');
+    const signInStatusDisplay = document.getElementById('signInStatusDisplay');
+    const loadingStatusCard = document.getElementById('loadingStatusCard');
+    const notificationCountDisplay = document.getElementById('notificationCountDisplay');
+    const newNotificationCount = document.getElementById('newNotificationCount');
+    const notificationList = document.getElementById('notificationList');
+    const welcomeMessage = document.getElementById('welcomeMessage'); // Welcome message element
+    const sliderProfilePic = document.getElementById('slider-profile-pic');
+    const sliderUserName = document.getElementById('sliderUserName');
+    const loginLogoutButton = document.getElementById('loginLogoutButton');
+
+
+    // signInStatusCard এ ক্লিক ইভেন্ট লিসেনার যোগ করুন
+    if (signInStatusCard) { // নিশ্চিত করুন এলিমেন্ট বিদ্যমান আছে
+      signInStatusCard.addEventListener('click', () => {
+        window.location.href = 'login.html'; // আপনার লগইন পেজের URL এখানে দিন
+      });
+    }
+
+    async function loadUserDataFromFirebase() {
+        // প্রথমে সব কার্ড লুকান এবং লোডিং স্পিনার দেখান
+        if (userPointsCard) userPointsCard.classList.add('hidden');
+        if (signInStatusCard) signInStatusCard.classList.add('hidden');
+        if (loadingStatusCard) loadingStatusCard.classList.remove('hidden');
+
+        onAuthStateChanged(auth, async (user) => {
+            console.log("onAuthStateChanged fired. User object:", user); // Added log
+            let displayNameToShow = "ইউজার"; // Default placeholder if no specific name is found
+
+            if (user) {
+                console.log("User is logged in. User UID:", user.uid); // Added log
+                try {
+                    const userRef = child(ref(db), `users/${user.uid}`);
+                    const userSnap = await get(userRef);
+                    console.log(`Attempting to fetch user data from path: users/${user.uid}`); // Added log
+                    console.log("userSnap.exists() result:", userSnap.exists()); // Added log
+
+                    if (userSnap.exists()) {
+                        const userData = userSnap.val();
+                        console.log("User data found in Realtime Database:", userData); // Added log
+
+                        // প্রোফাইল ছবি লোড
+                        if (userData.profilePictureUrl) {
+                            headerProfileLogo.src = userData.profilePictureUrl;
+                            if (sliderProfilePic) sliderProfilePic.src = userData.profilePictureUrl;
+                        } else {
+                            headerProfileLogo.src = DEFAULT_PROFILE_PIC_URL;
+                            if (sliderProfilePic) sliderProfilePic.src = DEFAULT_PROFILE_PIC_URL;
+                            console.warn("সতর্কতা: ব্যবহারকারীর প্রোফাইল ছবি পাওয়া যায়নি, ডিফল্ট ছবি ব্যবহার করা হচ্ছে।"); // Specific warning
+                        }
+                        // ব্যবহারকারীর ডিসপ্লে নাম
+                        if (userData.displayName) {
+                          displayNameToShow = userData.displayName;
+                        } else if (user.email) {
+                          displayNameToShow = user.email; // Fallback to email if name isn't available
+                          console.warn("সতর্কতা: Realtime Database-এ ব্যবহারকারীর 'name' ফিল্ড পাওয়া যায়নি, ইমেল ব্যবহার করা হচ্ছে।"); // Specific warning
+                        } else {
+                            // Neither userData.name nor user.email is available for a logged-in user
+                            console.error("কনসোল ত্রুটি: লগইন করা ব্যবহারকারীর জন্য কোনো নির্দিষ্ট নাম (ডাটাবেস বা ইমেল থেকে) পাওয়া যায়নি। ডিফল্ট নাম 'ইউজার' দেখানো হচ্ছে।");
+                        }
+
+                        // পয়েন্ট লোড ও কার্ড দেখান
+                        if (typeof userData.points !== 'undefined') {
+                            userPointsDisplay.textContent = `${esc(userData.points)} Points`;
+                        } else {
+                            userPointsDisplay.textContent = `0 Points`; 
+                            console.warn("সতর্কতা: ব্যবহারকারীর 'points' ফিল্ড পাওয়া যায়নি, 0 পয়েন্ট দেখানো হচ্ছে।"); // Specific warning
+                        }
+                        if (userPointsCard) userPointsCard.classList.remove('hidden'); // পয়েন্ট কার্ড দেখান
+
+                    } else {
+                        // This block is executed if userSnap.exists() is false
+                        console.warn("সতর্কতা: Realtime Database-এ ব্যবহারকারীর ডকুমেন্ট পাওয়া যায়নি। (userSnap.exists() returned false for UID: " + user.uid + ")"); // More specific warning
+                        headerProfileLogo.src = DEFAULT_PROFILE_PIC_URL;
+                        if (sliderProfilePic) sliderProfilePic.src = DEFAULT_PROFILE_PIC_URL;
+                        userPointsDisplay.textContent = `0 Points`; 
+                        if (userPointsCard) userPointsCard.classList.remove('hidden'); // পয়েন্ট কার্ড দেখান
+                        
+                        if (!user.email) {
+                            // If user is logged in via Auth but no DB data and no email, it's a generic name
+                            console.error("কনসোল ত্রুটি: Realtime Database-এ ব্যবহারকারীর ডেটা পাওয়া যায়নি এবং ইমেলও নেই। ডিফল্ট নাম 'ইউজার' দেখানো হচ্ছে।");
+                        } else {
+                            displayNameToShow = user.email; // Fallback to email if DB data is missing
+                        }
+                    }
+                    // লগইন করা থাকলে, লোডিং এবং সাইন-ইন কার্ড লুকান
+                    if (loadingStatusCard) loadingStatusCard.classList.add('hidden');
+                    if (signInStatusCard) signInStatusCard.classList.add('hidden');
+                    
+                    // ওয়েলকাম মেসেজ আপডেট করুন
+                    if (welcomeMessage) welcomeMessage.textContent = ` ${displayNameToShow}`;
+                    if (sliderUserName) sliderUserName.textContent = ` ${displayNameToShow}`;
+
+
+                    if (loginLogoutButton) {
+                        loginLogoutButton.textContent = 'লগআউট করুন';
+                        loginLogoutButton.classList.remove('btn-login');
+                        loginLogoutButton.classList.add('btn-logout');
+                        loginLogoutButton.onclick = async () => {
+                            await signOut(auth);
+                            closeSliderMenu();
+                        };
+                    }
+
+                } catch (error) {
+                    console.error("Realtime Database থেকে ব্যবহারকারীর ডেটা লোড করতে সমস্যা:", error);
+                    if (headerProfileLogo) headerProfileLogo.src = DEFAULT_PROFILE_PIC_URL;
+                    if (sliderProfilePic) sliderProfilePic.src = DEFAULT_PROFILE_PIC_URL;
+                    if (userPointsDisplay) userPointsDisplay.textContent = `ত্রুটি`;
+                    if (userPointsCard) userPointsCard.classList.add('hidden'); 
+                    if (signInStatusCard) signInStatusCard.classList.add('hidden'); 
+                    if (loadingStatusCard) loadingStatusCard.classList.add('hidden'); 
+                    if (welcomeMessage) welcomeMessage.textContent = `Your Name`; // ত্রুটি হলে ইউজার দেখান
+                    if (sliderUserName) sliderUserName.textContent = `Your Name`;
+                    console.error("কনসোল ত্রুটি: ব্যবহারকারীর ডেটা লোড করতে ব্যর্থ হওয়ায় ডিফল্ট নাম 'ইউজার' দেখানো হচ্ছে।"); // Specific error for data load failure
+
+                    if (loginLogoutButton) {
+                        loginLogoutButton.textContent = 'লগইন করুন';
+                        loginLogoutButton.classList.remove('btn-logout');
+                        loginLogoutButton.classList.add('btn-login');
+                        loginLogoutButton.onclick = () => { /* Implement login action here */ };
+                    }
+                }
+            } else {
+                // কোনো ব্যবহারকারী লগইন নেই
+                console.warn("সতর্কতা: কোনো ব্যবহারকারী লগইন নেই, 'অতিথি' হিসাবে দেখানো হচ্ছে।"); // Specific warning
+                if (headerProfileLogo) headerProfileLogo.src = DEFAULT_PROFILE_PIC_URL;
+                if (sliderProfilePic) sliderProfilePic.src = DEFAULT_PROFILE_PIC_URL;
+                if (userPointsDisplay) userPointsDisplay.textContent = `লগইন করুন`; 
+                if (userPointsCard) userPointsCard.classList.add('hidden'); // পয়েন্ট কার্ড লুকান
+                if (signInStatusDisplay) signInStatusCard.textContent = `লগইন করুন`; 
+                if (signInStatusCard) signInStatusCard.classList.remove('hidden'); // সাইন-ইন কার্ড দেখান
+                if (loadingStatusCard) loadingStatusCard.classList.add('hidden'); // স্পিনার লুকান
+                if (welcomeMessage) welcomeMessage.textContent = `Your Name`;
+                if (sliderUserName) sliderUserName.textContent = `Your Name`;
+
+                // Attempt anonymous sign-in if no user is signed in
+                signInAnonymously(auth).then(() => {
+                    console.log("Signed in anonymously for initial Firebase access.");
+                }).catch((error) => {
+                    console.error("Error signing in anonymously:", error);
+                });
+            }
+        });
+    }
+
+    // --- নোটিফিকেশন লোডিং ফাংশন (Realtime Database এর জন্য) ---
+
+    async function loadNotifications(userId) {
+        try {
+            const snapshot = await get(child(ref(db), "notifications")); // Realtime Database থেকে 'notifications' ডেটা লোড
+
+            if (!snapshot.exists()) {
+                return [];
+            }
+
+            const notificationsData = snapshot.val(); // অবজেক্ট হিসেবে ডেটা
+            const allNotificationData = [];
+
+            // ডেটা অবজেক্টকে অ্যারেতে রূপান্তর করুন এবং readBy স্ট্যাটাস যোগ করুন
+            for (const notificationId in notificationsData) {
+                const data = notificationsData[notificationId];
+                const isRead = data.readBy && userId ? data.readBy[userId] : false;
+                allNotificationData.push({ id: notificationId, ...data, read: isRead });
+            }
+
+            // টাইমস্ট্যাম্প অনুযায়ী সাজানো (সর্বশেষটি প্রথমে)
+            allNotificationData.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
+
+            return allNotificationData;
+        } catch (error) {
+            console.error("Realtime Database থেকে নোটিফিকেশন লোড করতে সমস্যা:", error);
+            return [];
+        }
+    }
+
+    async function markNotificationAsRead(notificationId, userId) {
+        try {
+            // Realtime Database এ নির্দিষ্ট পাথে আপডেট করুন
+            await update(ref(db, `notifications/${notificationId}/readBy/${userId}`), true);
+            console.log(`নোটিফিকেশন ${notificationId} পঠিত হিসাবে চিহ্নিত হয়েছে ব্যবহারকারী ${userId} দ্বারা।`);
+            loadAllNotificationsForUI(); // UI রিফ্রেশ করার জন্য পুনরায় লোড করুন
+        } catch (error) {
+            console.error("নোটিফিকেশন পঠিত হিসাবে চিহ্নিত করতে সমস্যা:", error);
+        }
+    }
+
+    async function loadAllNotificationsForUI() {
+        let unreadCount = 0;
+
+        onAuthStateChanged(auth, async (user) => {
+            const currentUserId = user ? user.uid : null;
+            const allNotifications = await loadNotifications(currentUserId);
+
+            if (notificationList) notificationList.innerHTML = ''; // বিদ্যমান নোটিফিকেশন পরিষ্কার করুন
+
+            if (allNotifications.length === 0) {
+                if (notificationList) notificationList.innerHTML = `<p class="text-center text-gray-500 py-2">কোনো নোটিফিকেশন নেই।</p>`;
+            } else {
+                allNotifications.forEach((notification) => {
+                    if (!notification.read) { // অপঠিত নোটিফিকেশন গণনা করুন
+                        unreadCount++;
+                    }
+
+                    const notificationItem = document.createElement('a');
+                    notificationItem.href = notification.link || '#';
+                    notificationItem.className = `block px-4 py-2 hover:bg-gray-100 border-b border-gray-100 last:border-b-0 ${notification.read ? 'opacity-70' : 'font-semibold'}`;
+
+                    let timeAgoText = "এইমাত্র";
+                    // টাইমস্ট্যাম্প মিলি সেকেন্ডে থাকলে Date অবজেক্ট তৈরি করুন
+                    if (notification.timestamp) {
+                        const date = new Date(notification.timestamp);
+                        const now = new Date();
+                        const diffMs = now - date;
+                        const diffMinutes = Math.round(diffMs / (1000 * 60));
+                        const diffHours = Math.round(diffMs / (1000 * 60 * 60));
+                        const diffDays = Math.round(diffMs / (1000 * 60 * 60 * 24));
+
+                        if (diffMinutes < 1) {
+                            timeAgoText = "এইমাত্র";
+                        } else if (diffMinutes < 60) {
+                            timeAgoText = `${diffMinutes} মিনিট আগে`;
+                        } else if (diffHours < 24) {
+                            timeAgoText = `${diffHours} ঘন্টা আগে`;
+                        } else {
+                            timeAgoText = `${diffDays} দিন আগে`;
+                        }
+                    }
+
+                    notificationItem.innerHTML = `
+                        <p class="text-sm text-gray-800">${esc(notification.title || "Untitled Notification")}</p>
+                        ${notification.message ? `<p class="text-xs text-gray-500 mt-1">${esc(notification.message)}</p>` : ""}
+                        <p class="text-xs text-gray-400 mt-1">${timeAgoText}</p>
+                    `;
+                    if (notificationList) notificationList.appendChild(notificationItem);
+
+                    if (!notification.read && currentUserId) { // যদি অপঠিত হয় এবং ব্যবহারকারী লগইন থাকে
+                        notificationItem.addEventListener('click', () => {
+                            markNotificationAsRead(notification.id, currentUserId);
+                        });
+                    }
+                });
+            }
+            if (notificationCountDisplay) notificationCountDisplay.textContent = unreadCount.toString();
+            if (newNotificationCount) newNotificationCount.textContent = `${unreadCount}টি নতুন`;
+
+            if (unreadCount === 0 && allNotifications.length === 0) {
+                if (notificationList) notificationList.innerHTML = `<p class="text-center text-gray-500 py-2">কোনো নোটিফিকেশন নেই।</p>`;
+            } else if (unreadCount === 0 && allNotifications.length > 0) {
+                if (newNotificationCount) newNotificationCount.textContent = `০টি নতুন`;
+            }
+        });
+    }
+
+
+    // --- মোবাইল স্লাইডার মেনু লজিক ---
+
+    const mobileMenuBtn = document.getElementById('mobileMenuBtn');
+    const mobileSliderMenu = document.getElementById('mobileSliderMenu');
+    const sliderBackdrop = document.getElementById('sliderBackdrop');
+
+    if (mobileMenuBtn && mobileSliderMenu && sliderBackdrop) {
+        mobileMenuBtn.addEventListener('click', () => {
+            mobileSliderMenu.classList.add('active');
+            sliderBackdrop.classList.remove('hidden');
+            sliderBackdrop.classList.add('active');
+            document.body.style.overflow = 'hidden'; // স্লাইডার খোলা থাকলে বডি স্ক্রল বন্ধ করুন
+            mobileMenuBtn.setAttribute('aria-expanded', 'true');
+        });
+
+        const closeSliderMenu = () => {
+            mobileSliderMenu.classList.remove('active');
+            sliderBackdrop.classList.remove('active');
+            setTimeout(() => {
+                sliderBackdrop.classList.add('hidden');
+            }, 350); // ট্রানজিশন শেষ হওয়ার পর ব্যাকড্রপ লুকান
+            document.body.style.overflow = ''; // বডি স্ক্রল আবার চালু করুন
+            mobileMenuBtn.setAttribute('aria-expanded', 'false');
+        };
+
+        // স্লাইডার ব্যাকড্রপে ক্লিক করলে স্লাইডার বন্ধ হবে
+        sliderBackdrop.addEventListener('click', closeSliderMenu);
+
+        // স্লাইডার মেনুর বাইরে ক্লিক করলে স্লাইডার বন্ধ হবে (নোটিফিকেশন ড্রপডাউনের মতো)
+        document.addEventListener('click', (event) => {
+            if (!mobileSliderMenu.contains(event.target) && !mobileMenuBtn.contains(event.target)) {
+                closeSliderMenu();
+            }
+        });
+
+        // স্লাইডার মেনুর ভেতরের লিংকে ক্লিক করলে স্লাইডার বন্ধ হবে
+        const menuItems = mobileSliderMenu.querySelectorAll('.menu-item');
+        menuItems.forEach(item => {
+            item.addEventListener('click', closeSliderMenu);
+        });
+
+    } else {
+        console.warn("Mobile slider menu elements (mobileMenuBtn, mobileSliderMenu, or sliderBackdrop) not found.");
+    }
+    
+    // নোটিফিকেশন ড্রপডাউন লজিক (পরিবর্তন করা হয়নি)
+    const notificationButton = document.getElementById('notificationButton');
+    const notificationDropdown = document.getElementById('notificationDropdown');
+
+    if (notificationButton && notificationDropdown) {
+        notificationButton.addEventListener('click', (event) => {
+            event.stopPropagation();
+            notificationDropdown.classList.toggle('hidden');
+        });
+
+        document.addEventListener('click', (event) => {
+            if (!notificationDropdown.contains(event.target) && !notificationButton.contains(event.target)) {
+                notificationDropdown.classList.add('hidden');
+            }
+        });
+    }
+
+
+    // Initial data loads for header and page content
+    loadUserDataFromFirebase();
+    loadAllNotificationsForUI();
+</script>
+ </body>
+</html>
+

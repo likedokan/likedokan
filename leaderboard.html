@@ -1,0 +1,771 @@
+<!DOCTYPE html>
+<html lang="bn">
+ <head>
+  <meta charset="utf-8"/>
+  <meta content="width=device-width, initial-scale=1" name="viewport"/>
+  <title>
+   Water Drop Theme Dashboard
+  </title>
+  <script src="https://cdn.tailwindcss.com">
+  </script>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css" rel="stylesheet"/>
+  <link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri&amp;display=swap" rel="stylesheet"/>
+  <style>
+   body {
+      font-family: 'Hind Siliguri', sans-serif;
+      overflow-x: hidden; /* নিশ্চিত করে যে সাইডবারের কারণে কোনো আনুভূমিক স্ক্রলবার না আসে */
+    }
+
+    /* প্রোফাইল ছবির জন্য স্টাইল */
+    #header-profile-logo {
+        width: 48px; /* লোগোর আকারের সাথে মিলিয়ে */
+        height: 48px; /* লোগোর আকারের সাথে মিলিয়ে */
+        border-radius: 50%; /* গোলাকার */
+        border: 2px solid #007bff; /* উদাহরণ বর্ডার */
+        object-fit: cover;
+    }
+
+    /* মোবাইল স্লাইড-আউট মেনুর জন্য স্টাইল */
+    #mobileSliderMenu {
+        position: fixed;
+        top: 0;
+        right: -280px; /* লুকানো অবস্থায় */
+        width: 280px; /* সাইডবারের প্রস্থ */
+        height: 100%;
+        background-color: #ffffff; /* সাদা ব্যাকগ্রাউন্ড */
+        box-shadow:
+          -8px 0 15px rgba(0, 0, 0, 0.15),
+          inset 4px 0 8px rgba(255, 255, 255, 0.6);
+        z-index: 1000; /* নিশ্চিত করে এটি সবকিছুর উপরে থাকে */
+        transition: right 0.35s cubic-bezier(0.4, 0, 0.2, 1); /* মসৃণ স্লাইদ অ্যানিমেশন */
+        padding-top: 5rem; /* হেডারের উচ্চতা অনুযায়ী */
+        display: flex;
+        flex-direction: column;
+        border-top-left-radius: 1rem;
+        border-bottom-left-radius: 1rem;
+        backdrop-filter: saturate(180%) blur(12px);
+        -webkit-backdrop-filter: saturate(180%) blur(12px);
+    }
+
+    #mobileSliderMenu.open { /* Changed from .active to .open for consistency with JS */
+        right: 0; /* দৃশ্যমান অবস্থায় */
+        box-shadow:
+          -12px 0 25px rgba(0, 0, 0, 0.25),
+          inset 4px 0 12px rgba(255, 255, 255, 0.7);
+    }
+
+    #sliderMenuContent {
+        flex-grow: 1; /* মেনু আইটেমগুলোকে ফাঁকা স্থান পূরণ করতে দেয় */
+        padding: 1.5rem 0;
+        display: flex;
+        flex-direction: column;
+        gap: 0.75rem;
+    }
+
+    #sliderMenuContent .menu-item {
+        display: flex;
+        align-items: center;
+        padding: 0.75rem 1.75rem;
+        color: #4338ca; /* indigo-700 */
+        font-weight: 600; /* font-semibold */
+        font-size: 1.125rem; /* text-lg */
+        border-radius: 0.75rem;
+        transition: background-color 0.3s ease, color 0.3s ease, transform 0.2s ease;
+        text-decoration: none; /* আন্ডারলাইন সরাচ্ছে */
+        box-shadow: 0 0 0 0 transparent;
+        user-select: none;
+        position: relative;
+        overflow: hidden;
+    }
+
+    #sliderMenuContent .menu-item::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 0;
+      height: 100%;
+      width: 4px;
+      background: #4338ca;
+      border-top-right-radius: 0.75rem;
+      border-bottom-right-radius: 0.75rem;
+      transform: scaleY(0);
+      transform-origin: center;
+      transition: transform 0.3s ease;
+      z-index: 1;
+    }
+
+    #sliderMenuContent .menu-item:hover::before,
+    #sliderMenuContent .menu-item:focus-visible::before {
+      transform: scaleY(1);
+    }
+
+    #sliderMenuContent .menu-item:hover {
+        background-color: #4338ca; /* indigo-700 */
+        color: #e0e7ff; /* indigo-100 */
+        transform: translateX(6px);
+        box-shadow: 0 8px 15px rgba(67, 56, 202, 0.3);
+        z-index: 10;
+        outline: none;
+    }
+
+    #sliderMenuContent .menu-item:focus-visible {
+        outline: 2px solid #4338ca;
+        outline-offset: 2px;
+    }
+
+    /* ওভারলে ব্যাকড্রপ */
+    #sliderBackdrop {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.45); /* গাঢ় ব্যাকড্রপ */
+        z-index: 999; /* স্লাইডারের নিচে থাকে */
+        opacity: 0;
+        visibility: hidden;
+        transition: opacity 0.35s cubic-bezier(0.4, 0, 0.2, 1), visibility 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+        backdrop-filter: blur(2px);
+        -webkit-backdrop-filter: blur(2px);
+    }
+
+    #sliderBackdrop.active {
+        opacity: 1;
+        visibility: visible;
+    }
+
+    /* নোটিফিকেশন ড্রপডাউনের জন্য নতুন স্টাইল - তীর চিহ্ন (caret) */
+    #notificationDropdown::before {
+        content: '';
+        position: absolute;
+        top: -10px; /* ড্রপডাউন থেকে উপরের দিকে */
+        right: 18px; /* নোটিফিকেশন বাটনের সাথে সামঞ্জস্যপূর্ণ */
+        border-width: 0 10px 10px 10px; /* একটি ত্রিভুজ তৈরি করে */
+        border-color: transparent transparent white transparent; /* সাদা ত্রিভুজ */
+        filter: drop-shadow(0 -2px 1px rgba(0,0,0,0.05)); /* হালকা শ্যাডো */
+        z-index: 51; /* ড্রপডাউনের উপরে থাকবে */
+    }
+
+    #notificationDropdown::after {
+        content: '';
+        position: absolute;
+        top: -11px; /* বর্ডারের জন্য 1px উপরে */
+        right: 343px; /* নোটিফিকেশন বাটনের সাথে সামঞ্জস্যপূর্ণ */
+        border-width: 0 10px 10px 10px;
+        border-color: transparent transparent #e2e8f0 transparent; /* বর্ডারের রঙ */
+        z-index: 50; /* ড্রপডাউনের উপরে কিন্তু সাদা ত্রিভুজের নিচে থাকবে */
+    }
+
+    /* মোবাইল স্ক্রিনের জন্য নোটিফিকেশন ড্রপডাউনের পজিশন সামঞ্জস্য (যদি প্রয়োজন হয়) */
+    @media (max-width: 639px) { /* sm ব্রেকপয়েন্টের নিচে */
+        #notificationDropdown::before,
+        #notificationDropdown::after {
+            right: 25px; /* ছোট স্ক্রিনে নোটিফিকেশন বাটনের অবস্থানের সাথে সামঞ্জস্য */
+        }
+    }
+    /* স্পিনারের জন্য অতিরিক্ত স্টাইল */
+    .spinner {
+      border: 2px solid rgba(0, 0, 0, 0.1);
+      border-left-color: #4f46e5; /* indigo-600 */
+      border-radius: 50%;
+      width: 16px;
+      height: 16px;
+      animation: spin 1s linear infinite;
+    }
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+    /* লগইন/লগআউট বাটনের জন্য নতুন স্টাইল */
+    .btn-login {
+        background-color: #22c55e; /* green-500 */
+        color: white;
+    }
+    .btn-login:hover {
+        background-color: #16a34a; /* green-600 */
+    }
+    .btn-login:focus {
+        outline: none;
+        box-shadow: 0 0 0 2px #4ade80, 0 0 0 4px rgba(34, 197, 94, 0.5); /* green-300 ring */
+    }
+
+    .btn-logout {
+        background-color: #ef4444; /* red-500 */
+        color: white;
+    }
+    .btn-logout:hover {
+        background-color: #dc2626; /* red-600 */
+    }
+    .btn-logout:focus {
+        outline: none;
+        box-shadow: 0 0 0 2px #f87171, 0 0 0 4px rgba(239, 68, 68, 0.5); /* red-300 ring */
+    }
+  </style>
+ </head>
+ <body class="bg-gradient-to-b from-cyan-100 to-blue-200 min-h-screen flex flex-col">
+  <header class="bg-white shadow-xl sticky top-0 z-50 border-b border-gray-200">
+   <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 flex items-center justify-between">
+    <div class="flex items-center space-x-3 sm:space-x-4">
+     <img alt="একজন হাস্যোজ্জ্বল বাঙালি পুরুষের প্রোফাইল ছবি, হালকা বাদামী চুল এবং চোখ, নীল শার্ট পরিহিত"
+          class="w-10 h-10 sm:w-12 sm:h-12 rounded-full border-2 border-indigo-500 shadow-md"
+          loading="lazy"
+          src="https://i.pravatar.cc/300"
+          id="header-profile-logo"/> 
+     <div class="hidden sm:block">
+      <p id="welcomeMessage" class="text-gray-700 font-semibold text-base sm:text-lg leading-tight select-none">স্বাগতম, রাহুল</p>
+      <p class="text-gray-500 text-xs sm:text-sm select-none">আপনার প্রোফাইল</p>
+     </div>
+     <h1 class="text-2 sm:text-3xl font-extrabold text-indigo-600 tracking-wide select-none ml-4 sm:ml-6">
+      <span>LeaderBoard</span>
+     </h1>
+    </div>
+
+    <div class="flex items-center space-x-3 sm:space-x-4">
+      <div class="flex items-center space-x-3">
+        <div id="userPointsCard" aria-label="আপনার পয়েন্ট"
+            class="flex items-center bg-indigo-50 text-indigo-700 font-semibold px-2 py-1 rounded-full shadow select-none text-xs scale-90 hidden">
+          <i class="fas fa-coins mr-1 text-yellow-400 text-sm"></i>
+          <span id="userPointsDisplay">0 Points</span>
+        </div>
+
+        <div id="signInStatusCard" aria-label="সাইন-ইন স্ট্যাটাস"
+            class="flex items-center bg-red-50 text-red-700 font-semibold px-2 py-1 rounded-full shadow select-none text-xs scale-90 hidden cursor-pointer">
+          <i class="fas fa-user-circle mr-1 text-red-500 text-sm"></i>
+          <span id="signInStatusDisplay">লগইন করুন</span>
+        </div>
+
+        <div id="loadingStatusCard" class="flex items-center bg-gray-100 text-gray-600 font-semibold px-2 py-1 rounded-full shadow select-none text-xs scale-90">
+            <div class="spinner mr-2"></div>
+            <span>লোড হচ্ছে...</span>
+        </div>
+      </div>
+
+     <button id="notificationButton" aria-label="নোটিফিকেশন"
+             class="relative text-indigo-600 hover:text-indigo-800 transition focus:outline-none">
+       <i class="fas fa-bell text-lg sm:text-xl"></i>
+       <span class="absolute -top-1 -right-1 sm:-top-2 sm:-right-2 bg-red-600 text-white text-xs rounded-full px-1 sm:px-1.5 shadow-lg" id="notificationCountDisplay">0</span>
+     </button>
+
+     <div id="notificationDropdown" class="absolute top-16 right-4 sm:right-6 md:right-10 bg-white border border-gray-200 rounded-lg shadow-lg w-64 md:w-80 z-50 hidden">
+       <div class="px-4 py-3 border-b border-gray-200 flex justify-between items-center">
+         <h3 class="font-semibold text-gray-800">নোটিফিকেশনস</h3>
+         <span class="text-xs text-gray-500" id="newNotificationCount">০টি নতুন</span>
+       </div>
+       <div class="py-2 max-h-60 overflow-y-auto" id="notificationList">
+         </div>
+       <div class="px-4 py-3 border-t border-gray-200 text-center">
+         <a href="#" class="text-sm text-blue-600 hover:text-blue-800 font-medium">সকল নোটিফিকেশন দেখুন</a>
+       </div>
+     </div>
+     <button id="mobileMenuBtn" aria-label="মেনু"
+             aria-controls="mobileSliderMenu"
+             aria-expanded="false"
+             class="md:hidden text-indigo-600 hover:text-indigo-800 text-xl sm:text-2xl focus:outline-none">
+       <i class="fas fa-bars"></i>
+     </button>
+
+     <nav aria-label="প্রধান নেভিগেশন"
+          class="hidden md:flex items-center space-x-6 lg:space-x-8 text-indigo-600 font-semibold select-none text-base"
+          role="navigation">
+      <a class="hover:text-indigo-800 transition" href="dashboard.html">ড্যাশবোর্ড</a>
+      <a class="hover:text-indigo-800 transition" href="mytasklist.html">টাস্ক</a>
+      <a class="hover:text-indigo-800 transition" href="order.html">অর্ডার</a>
+      <a class="hover:text-indigo-800 transition" href="reffer.html">রেফার</a>
+      <a class="hover:text-indigo-800 transition" href="leaderboard.html">লিডারবোর্ড</a>
+     </nav>
+    </div>
+   </div>
+
+   <div id="mobileSliderMenu" role="menu" aria-label="মোবাইল স্লাইডার মেনু">
+     <div class="flex items-center space-x-3 p-4 border-b border-gray-200 mb-4">
+       <img alt="স্লাইডার প্রোফাইল ছবি"
+            class="w-16 h-16 rounded-full border-2 border-indigo-500 shadow-md"
+            loading="lazy"
+            src="https://i.pravatar.cc/300?img=1"
+            id="slider-profile-pic"/>
+       <div>
+         <p id="sliderUserName" class="text-gray-700 font-semibold text-lg leading-tight">স্বাগতম, ইউজার</p>
+         <p class="text-gray-500 text-sm">আপনার প্রোফাইল</p>
+       </div>
+     </div>
+        <div id="sliderMenuContent" role="none">
+          <a class="menu-item" href="dashboard.html" role="menuitem" tabindex="0">ড্যাশবোর্ড</a>
+          <a class="menu-item" href="mytasklist.html" role="menuitem" tabindex="0">আমার টাস্ক</a>
+          <a class="menu-item" href="completedtask.html" role="menuitem" tabindex="0">সম্পূর্ণ করা টাস্ক</a>
+          <a class="menu-item" href="order.html" role="menuitem" tabindex="0">অর্ডার করুন</a>
+          <a class="menu-item" href="reffer.html" role="menuitem" tabindex="0">রেফার করুন</a>
+          <a class="menu-item" href="leaderboard.html" role="menuitem" tabindex="0">লিডারবোর্ড</a>
+        </div>
+     <div class="p-4 mt-auto border-t border-gray-200">
+        <button id="loginLogoutButton" class="w-full py-2 px-4 rounded-md font-semibold transition-colors duration-200
+                                                focus:outline-none focus:ring-2 focus:ring-offset-2">
+            লগইন করুন
+        </button>
+     </div>
+   </div>
+   <div id="sliderBackdrop" class="hidden" tabindex="-1" aria-hidden="true"></div>
+  </header>
+  <main class="flex-grow max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-10 mt-[80px]">
+   <h2 class="text-3xl font-extrabold text-blue-900 mb-8 text-center">
+    লিডারবোর্ড - আপনার অগ্রগতি দেখুন
+   </h2>
+<div class="px-px overflow-x-auto w-full">
+  <table class="w-full bg-white text-sm sm:text-base">
+     <thead class="bg-blue-200 text-blue-900">
+      <tr>
+      <th class="text-center py-2 px-2 font-semibold" scope="col">#</th>
+<th class="text-left py-2 px-2 font-semibold">ইউজার</th>
+<th class="text-left py-2 px-2 font-semibold" scope="col">স্কোর</th>
+<th class="text-left py-2 px-2 font-semibold" scope="col">লেভেল</th>
+
+      </tr>
+     </thead>
+     <tbody class="divide-y divide-blue-100" id="leaderboard-body">
+      <!-- Leaderboard data will be loaded here -->
+     </tbody>
+    </table>
+   </div>
+  </main>
+  <footer class="bg-blue-700 text-blue-100 py-6 mt-10">
+   <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+    <p>
+     © ২০২৪ Water Drop. সর্বস্বত্ব সংরক্ষিত।
+    </p>
+   </div>
+  </footer>
+  <script type="module">
+    // Firebase Modules (Unified and Modular API)
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-app.js";
+    import { getAuth, onAuthStateChanged, signOut, signInAnonymously } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-auth.js";
+    import { getDatabase, ref, get, child, update } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-database.js"; // Realtime Database modules
+
+    // Firebase Configuration
+    const firebaseConfig = {
+      apiKey: "AIzaSyAC4h55aA0Zz--V5ejyndzR5WC_-9rAPio",
+      authDomain: "subscribe-bot-6f9b2.firebaseapp.com",
+      databaseURL: "https://subscribe-bot-6f9b2-default-rtdb.firebaseio.com", // Realtime Database URL যোগ করুন
+      projectId: "subscribe-bot-6f9b2",
+      storageBucket: "subscribe-bot-6f9b2.firebasestorage.app",
+      messagingSenderId: "141787931031",
+      appId: "1:141787931031:web:2108a3e930f5ce4fbc64d2",
+      measurementId: "G-HSDKCJB14Y"
+    };
+
+    // Initialize Firebase
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getDatabase(app); // getDatabase ব্যবহার করা হয়েছে
+
+    // Default Profile Picture URL (আপনার Cloudinary ছবি)
+    const DEFAULT_PROFILE_PIC_URL = 'https://i.pravatar.cc/300'; // এখানে সঠিক URL ব্যবহার করুন
+
+    // DOM Elements
+    let mobileMenuBtn, mobileSliderMenu, sliderBackdrop, sliderProfilePic, sliderUserName, loginLogoutButton;
+    let headerProfileLogo, userPointsCard, userPointsDisplay, signInStatusCard, signInStatusDisplay, loadingStatusCard;
+    let notificationCountDisplay, newNotificationCount, notificationList, notificationButton, notificationDropdown;
+    let welcomeMessage;
+    let leaderboardBody;
+
+    // Function to get elements after the DOM is loaded
+    function getHeaderElements() {
+        mobileMenuBtn = document.getElementById("mobileMenuBtn"); 
+        mobileSliderMenu = document.getElementById('mobileSliderMenu'); 
+        sliderBackdrop = document.getElementById('sliderBackdrop'); 
+        sliderProfilePic = document.getElementById('slider-profile-pic'); // স্লাইডার প্রোফাইল পিক
+        sliderUserName = document.getElementById('sliderUserName'); // স্লাইডার ইউজার নেম
+        loginLogoutButton = document.getElementById('loginLogoutButton'); // লগইন/লগআউট বাটন
+        headerProfileLogo = document.getElementById('header-profile-logo'); 
+        userPointsCard = document.getElementById('userPointsCard');
+        userPointsDisplay = document.getElementById('userPointsDisplay');
+        signInStatusCard = document.getElementById('signInStatusCard');
+        signInStatusDisplay = document.getElementById('signInStatusDisplay');
+        loadingStatusCard = document.getElementById('loadingStatusCard');
+        notificationCountDisplay = document.getElementById('notificationCountDisplay');
+        newNotificationCount = document.getElementById('newNotificationCount');
+        notificationList = document.getElementById('notificationList');
+        notificationButton = document.getElementById('notificationButton');
+        notificationDropdown = document.getElementById('notificationDropdown');
+        welcomeMessage = document.getElementById('welcomeMessage'); // Welcome message element
+        leaderboardBody = document.getElementById('leaderboard-body'); // Leaderboard table body
+    }
+
+    // Helper for escaping HTML
+    function esc(str = "") {
+        return String(str)
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;");
+    }
+
+    // Function to determine level based on points
+    function getLevel(points) {
+        if (points >= 1500) return 'লেভেল 5';
+        if (points >= 1200) return 'লেভেল 4';
+        if (points >= 900) return 'লেভেল 3';
+        if (points >= 750) return 'লেভেল 2';
+        return 'লেভেল 1';
+    }
+
+    // Load Leaderboard data
+    async function loadLeaderboard() {
+        if (leaderboardBody) {
+            leaderboardBody.innerHTML = `
+                <tr>
+                    <td colspan="4" class="text-center py-4 text-blue-700 animate-pulse">
+                        লিডারবোর্ড লোড হচ্ছে...
+                    </td>
+                </tr>
+            `;
+        }
+
+        try {
+            const usersSnapshot = await get(child(ref(db), "users"));
+            const usersData = usersSnapshot.val() || {};
+            let leaderboardData = [];
+
+            for (const uid in usersData) {
+                const user = usersData[uid];
+                leaderboardData.push({
+                    uid: uid,
+                    displayName: user.displayName || 'অজানা ইউজার',
+                    profilePictureUrl: user.profilePictureUrl || DEFAULT_PROFILE_PIC_URL,
+                    points: user.points || 0
+                });
+            }
+
+            // Sort by points in descending order
+            leaderboardData.sort((a, b) => b.points - a.points);
+
+            if (leaderboardBody) {
+                leaderboardBody.innerHTML = ''; // Clear loading message
+
+                if (leaderboardData.length === 0) {
+                    leaderboardBody.innerHTML = `
+                        <tr>
+                            <td colspan="4" class="text-center py-4 text-gray-600">
+                                কোনো ডেটা পাওয়া যায়নি।
+                            </td>
+                        </tr>
+                    `;
+                } else {
+                    leaderboardData.forEach((user, index) => {
+                        const row = document.createElement('tr');
+                        row.className = `hover:bg-blue-50 transition ${index % 2 === 0 ? 'bg-white' : 'bg-blue-50'}`; // Alternate row colors
+                        row.innerHTML = `
+                            <td class="py-4 pl-6 pr-1 font-medium text-blue-800 text-center">
+                                ${index + 1}
+                            </td>
+                            <td class="py-4 pl-0 pr-6 flex items-center space-x-3">
+                                <img alt="${esc(user.displayName)} এর প্রোফাইল ছবি" class="w-12 h-12 rounded-full object-cover" height="48" src="${esc(user.profilePictureUrl)}" width="48"/>
+                                <span class="text-blue-900 font-semibold">
+                                    ${esc(user.displayName)}
+                                </span>
+                            </td>
+                            <td class="py-4 px-6 text-blue-800 font-semibold">
+                                ${esc(user.points)}
+                            </td>
+                            <td class="py-4 pl-0 pr-3">
+                                <span class="inline-block bg-blue-300 text-blue-900 px-3 py-1 rounded-full text-sm font-semibold">
+                                    ${getLevel(user.points)}
+                                </span>
+                            </td>
+                        `;
+                        leaderboardBody.appendChild(row);
+                    });
+                }
+            }
+        } catch (error) {
+            console.error("লিডারবোর্ড ডেটা লোড করতে সমস্যা:", error);
+            if (leaderboardBody) {
+                leaderboardBody.innerHTML = `
+                    <tr>
+                        <td colspan="4" class="text-center py-4 text-red-600">
+                            ডেটা লোড করতে সমস্যা হয়েছে।
+                        </td>
+                    </tr>
+                `;
+            }
+        }
+    }
+
+
+    // Mobile Menu Toggle (Slider Menu)
+    function setupMobileMenuListeners() {
+        if (mobileMenuBtn && mobileSliderMenu && sliderBackdrop) { 
+            mobileMenuBtn.addEventListener("click", () => {
+                mobileSliderMenu.classList.add('open'); // Changed to 'open'
+                sliderBackdrop.classList.remove('hidden');
+                sliderBackdrop.classList.add('active');
+                document.body.style.overflow = 'hidden';
+                mobileMenuBtn.setAttribute('aria-expanded', 'true');
+            });
+
+            const closeSliderMenu = () => {
+                mobileSliderMenu.classList.remove('open'); // Changed to 'open'
+                sliderBackdrop.classList.remove('active');
+                setTimeout(() => {
+                    sliderBackdrop.classList.add('hidden');
+                }, 350);
+                document.body.style.overflow = '';
+                mobileMenuBtn.setAttribute('aria-expanded', 'false');
+            };
+            sliderBackdrop.addEventListener('click', closeSliderMenu);
+
+            // Removed touch/swipe event listeners as per user request
+            // mobileSliderMenu.addEventListener('touchstart', ...);
+            // mobileSliderMenu.addEventListener('touchmove', ...);
+            // mobileSliderMenu.addEventListener('touchend', ...);
+
+            // Close mobile menu when a menu item is clicked
+            document.querySelectorAll('#sliderMenuContent .menu-item').forEach(item => {
+                item.addEventListener('click', () => {
+                    closeSliderMenu();
+                });
+            });
+
+        } else {
+            console.warn("Mobile slider menu elements (mobileMenuBtn, mobileSliderMenu, or sliderBackdrop) not found.");
+        }
+    }
+    
+    // Notification Dropdown Toggle
+    function setupNotificationDropdownListeners() {
+        if (notificationButton && notificationDropdown) {
+            notificationButton.addEventListener('click', (event) => {
+                event.stopPropagation();
+                notificationDropdown.classList.toggle('hidden');
+            });
+
+            document.addEventListener('click', (event) => {
+                if (!notificationDropdown.contains(event.target) && !notificationButton.contains(event.target)) {
+                    notificationDropdown.classList.add('hidden');
+                }
+            });
+        } else {
+            console.warn("Notification elements (notificationButton or notificationDropdown) not found.");
+        }
+    }
+
+    // Handle Sign-in Status Card Click
+    function setupSignInCardListener() {
+        if (signInStatusCard) {
+            signInStatusCard.addEventListener('click', () => {
+                window.location.href = 'login.html'; // আপনার লগইন পেজের URL এখানে দিন
+            });
+        }
+    }
+
+    // Load User Data from Firebase
+    async function loadUserDataFromFirebase() {
+        if (userPointsCard) userPointsCard.classList.add('hidden');
+        if (signInStatusCard) signInStatusCard.classList.add('hidden');
+        if (loadingStatusCard) loadingStatusCard.classList.remove('hidden');
+
+        onAuthStateChanged(auth, async (user) => {
+            if (user) {
+                try {
+                    const userSnap = await get(child(ref(db), `users/${user.uid}`)); 
+                    let displayName = user.email; // ডিফল্ট নাম হিসেবে ইমেইল
+
+                    if (userSnap.exists()) {
+                        const userData = userSnap.val();
+                        if (headerProfileLogo) {
+                            headerProfileLogo.src = userData.profilePictureUrl || DEFAULT_PROFILE_PIC_URL;
+                        }
+                        if (userData.displayName) {
+                          displayName = userData.displayName;
+                        }
+                        if (userPointsDisplay && typeof userData.points !== 'undefined') {
+                            userPointsDisplay.textContent = `${esc(userData.points)} Points`;
+                        } else if (userPointsDisplay) {
+                            userPointsDisplay.textContent = `0 Points`; 
+                        }
+                        if (userPointsCard) userPointsCard.classList.remove('hidden');
+
+                        // Update mobile slider menu profile
+                        if (sliderProfilePic) sliderProfilePic.src = userData.profilePictureUrl || DEFAULT_PROFILE_PIC_URL;
+                        if (sliderUserName) sliderUserName.textContent = `স্বাগতম, ${displayName}`;
+
+                    } else {
+                        if (headerProfileLogo) headerProfileLogo.src = DEFAULT_PROFILE_PIC_URL;
+                        if (userPointsDisplay) userPointsDisplay.textContent = `0 Points`; 
+                        if (userPointsCard) userPointsCard.classList.remove('hidden');
+                        console.log("Realtime Database-এ ব্যবহারকারীর ডকুমেন্ট পাওয়া যায়নি।");
+
+                        // Update mobile slider menu profile
+                        if (sliderProfilePic) sliderProfilePic.src = DEFAULT_PROFILE_PIC_URL;
+                        if (sliderUserName) sliderUserName.textContent = `স্বাগতম, ইউজার`; 
+                    }
+                    if (loadingStatusCard) loadingStatusCard.classList.add('hidden');
+                    if (signInStatusCard) signInStatusCard.classList.add('hidden');
+                    if (welcomeMessage) welcomeMessage.textContent = `স্বাগতম, ${displayName}`;
+
+                    // Set login/logout button for logged in state
+                    if (loginLogoutButton) {
+                      loginLogoutButton.textContent = 'লগআউট করুন';
+                      loginLogoutButton.classList.remove('btn-login');
+                      loginLogoutButton.classList.add('btn-logout');
+                      loginLogoutButton.onclick = async () => {
+                          await signOut(auth);
+                          closeSliderMenu(); // Close menu after logout
+                      };
+                    }
+
+                } catch (error) {
+                    console.error("ব্যবহারকারীর ডেটা লোড করতে সমস্যা:", error);
+                    if (headerProfileLogo) headerProfileLogo.src = DEFAULT_PROFILE_PIC_URL;
+                    if (userPointsDisplay) userPointsDisplay.textContent = `ত্রুটি`;
+                    if (userPointsCard) userPointsCard.classList.add('hidden'); 
+                    if (signInStatusCard) signInStatusCard.classList.add('hidden'); 
+                    if (loadingStatusCard) loadingStatusCard.classList.add('hidden'); 
+                    if (welcomeMessage) welcomeMessage.textContent = `স্বাগতম, অতিথি`;
+
+                    // Update mobile slider menu profile
+                    if (sliderProfilePic) sliderProfilePic.src = DEFAULT_PROFILE_PIC_URL;
+                    if (sliderUserName) sliderUserName.textContent = `স্বাগতম, অতিথি`; 
+
+                    // Set login/logout button for error state
+                    if (loginLogoutButton) {
+                      loginLogoutButton.textContent = 'লগইন করুন';
+                      loginLogoutButton.classList.remove('btn-logout');
+                      loginLogoutButton.classList.add('btn-login');
+                      loginLogoutButton.onclick = () => {
+                          window.location.href = 'login.html';
+                      };
+                    }
+                }
+            } else {
+                if (headerProfileLogo) headerProfileLogo.src = DEFAULT_PROFILE_PIC_URL;
+                if (userPointsCard) userPointsCard.classList.add('hidden');
+                if (signInStatusCard) signInStatusCard.classList.remove('hidden');
+                if (signInStatusDisplay) signInStatusDisplay.textContent = `লগইন করুন`;
+                if (loadingStatusCard) loadingStatusCard.classList.add('hidden');
+                if (welcomeMessage) welcomeMessage.textContent = `স্বাগতম, অতিথি`;
+                console.log("কোনো ব্যবহারকারী লগইন নেই।");
+
+                // Update mobile slider menu profile
+                if (sliderProfilePic) sliderProfilePic.src = DEFAULT_PROFILE_PIC_URL;
+                if (sliderUserName) sliderUserName.textContent = `স্বাগতম, অতিথি`; 
+
+                // Set login/logout button for logged out state
+                if (loginLogoutButton) {
+                  loginLogoutButton.textContent = 'লগইন করুন';
+                  loginLogoutButton.classList.remove('btn-logout');
+                  loginLogoutButton.classList.add('btn-login');
+                  loginLogoutButton.onclick = () => {
+                      window.location.href = 'login.html';
+                  };
+                }
+                signInAnonymously(auth).then(() => {
+                  console.log("Signed in anonymously for initial Firebase access.");
+                }).catch((error) => {
+                  console.error("Error signing in anonymously:", error);
+                });
+            }
+        });
+    }
+
+    // Load Notifications
+    async function loadNotifications(userId) {
+        try {
+            const snapshot = await get(child(ref(db), "notifications"));
+            if (!snapshot.exists()) return [];
+
+            const notificationsData = snapshot.val();
+            const allNotificationData = [];
+            for (const notificationId in notificationsData) {
+                const data = notificationsData[notificationId];
+                const isRead = data.readBy && userId ? data.readBy[userId] : false;
+                allNotificationData.push({ id: notificationId, ...data, read: isRead });
+            }
+            allNotificationData.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
+            return allNotificationData;
+        } catch (error) {
+            console.error("নোটিফিকেশন লোড করতে সমস্যা:", error);
+            return [];
+        }
+    }
+
+    async function markNotificationAsRead(notificationId, userId) {
+        try {
+            await update(ref(db, `notifications/${notificationId}/readBy/${userId}`), true);
+            console.log(`নোটিফিকেশন ${notificationId} পঠিত হিসাবে চিহ্নিত হয়েছে।`);
+            loadAllNotificationsForUI();
+        }
+        catch (error) {
+            console.error("নোটিফিকেশন পঠিত হিসাবে চিহ্নিত করতে সমস্যা:", error);
+        }
+    }
+
+    async function loadAllNotificationsForUI() {
+        let unreadCount = 0;
+
+        onAuthStateChanged(auth, async (user) => {
+            const currentUserId = user ? user.uid : null;
+            const allNotifications = await loadNotifications(currentUserId);
+
+            if (notificationList) notificationList.innerHTML = '';
+
+            if (allNotifications.length === 0) {
+                if (notificationList) notificationList.innerHTML = `<p class="text-center text-gray-500 py-2">কোনো নোটিফিকেশন নেই।</p>`;
+            } else {
+                allNotifications.forEach((notification) => {
+                    if (!notification.read) unreadCount++;
+
+                    const notificationItem = document.createElement('a');
+                    notificationItem.href = notification.link || '#';
+                    notificationItem.className = `block px-4 py-2 hover:bg-gray-100 border-b border-gray-100 last:border-b-0 ${notification.read ? 'opacity-70' : 'font-semibold'}`;
+
+                    let timeAgoText = "এইমাত্র";
+                    if (notification.timestamp) {
+                        const date = new Date(notification.timestamp);
+                        const now = new Date();
+                        const diffMs = now - date;
+                        const diffMinutes = Math.round(diffMs / (1000 * 60));
+                        const diffHours = Math.round(diffMs / (1000 * 60 * 60));
+                        const diffDays = Math.round(diffMs / (1000 * 60 * 60 * 24));
+
+                        if (diffMinutes < 1) timeAgoText = "এইমাত্র";
+                        else if (diffMinutes < 60) timeAgoText = `${diffMinutes} মিনিট আগে`;
+                        else if (diffHours < 24) timeAgoText = `${diffHours} ঘন্টা আগে`;
+                        else timeAgoText = `${diffDays} দিন আগে`;
+                    }
+
+                    notificationItem.innerHTML = `
+                        <p class="text-sm text-gray-800">${esc(notification.title || "Untitled Notification")}</p>
+                        ${notification.message ? `<p class="text-xs text-gray-500 mt-1">${esc(notification.message)}</p>` : ""}
+                        <p class="text-xs text-gray-400 mt-1">${timeAgoText}</p>
+                    `;
+                    if (notificationList) notificationList.appendChild(notificationItem);
+
+                    if (!notification.read && currentUserId) {
+                        notificationItem.addEventListener('click', () => {
+                            markNotificationAsRead(notification.id, currentUserId);
+                        });
+                    }
+                });
+            }
+            if (notificationCountDisplay) notificationCountDisplay.textContent = unreadCount.toString();
+            if (newNotificationCount) newNotificationCount.textContent = `${unreadCount}টি নতুন`;
+
+            if (unreadCount === 0 && allNotifications.length === 0) {
+                if (notificationList) notificationList.innerHTML = `<p class="text-center text-gray-500 py-2">কোনো নোটিফিকেশন নেই।</p>`;
+            } else if (unreadCount === 0 && allNotifications.length > 0) {
+                if (newNotificationCount) newNotificationCount.textContent = `০টি নতুন`;
+            }
+        });
+    }
+
+    // Initial data loads when DOM is ready
+    document.addEventListener('DOMContentLoaded', () => {
+      getHeaderElements(); // DOM উপাদানগুলি লোড হওয়ার পরে রেফারেন্স পেতে
+      setupSignInCardListener();
+      setupMobileMenuListeners(); // মোবাইল মেনু লিসেনার সেট আপ করতে
+      setupNotificationDropdownListeners(); // নোটিফিকেশন ড্রপডাউন লিসেনার সেট আপ করতে
+      loadUserDataFromFirebase();
+      loadAllNotificationsForUI();
+      loadLeaderboard(); // Load leaderboard data
+    });
+  </script>
+ </body>
+</html>

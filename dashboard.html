@@ -1,0 +1,1254 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1" name="viewport"/>
+    <title>Water Drop Theme Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"> </script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri&amp;display=swap" rel="stylesheet"/>
+    <style>
+        body {
+            font-family: 'Hind Siliguri', sans-serif;
+            overflow-x: hidden;
+        }
+
+        /* Skeleton Loading Styles for cards */
+        .skeleton-card {
+            background-color: #f3f4f6;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .shimmer {
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(to right, #f3f4f6 8%, #e5e7eb 18%, #f3f4f6 33%); /* gray-100, gray-200 */
+            background-size: 800px 104px;
+            position: absolute;
+            top: 0;
+            left: -800px; /* Start off-screen to the left */
+            animation: shimmer 1.5s infinite linear;
+        }
+
+        @keyframes shimmer {
+            0% {
+                left: -800px;
+            }
+            100% {
+                left: 800px;
+            }
+        }
+
+        .skeleton-line {
+            background-color: #e5e7eb; /* gray-200 */
+            border-radius: 4px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .skeleton-circle {
+            background-color: #e5e7eb; /* gray-200 */
+            border-radius: 50%;
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* Styles for profile picture */
+        #header-profile-logo {
+            width: 48px; /* Matches logo size */
+            height: 48px; /* Matches logo size */
+            border-radius: 50%; /* Circular */
+            border: 2px solid #007bff; /* Example border */
+            object-fit: cover;
+        }
+
+        /* Styles for mobile slide-out menu */
+        #mobileSliderMenu {
+            position: fixed;
+            top: 0;
+            right: -280px; /* Hidden state */
+            width: 280px; /* Sidebar width */
+            height: 100%;
+            background-color: #ffffff; /* White background */
+            box-shadow: -8px 0 15px rgba(0, 0, 0, 0.15), inset 4px 0 8px rgba(255, 255, 255, 0.6);
+            z-index: 1000; /* Ensures it's on top of everything */
+            transition: right 0.35s cubic-bezier(0.4, 0, 0.2, 1); /* Smooth slide animation */
+            padding-top: 5rem; /* According to header height */
+            display: flex;
+            flex-direction: column;
+            border-top-left-radius: 1rem;
+            border-bottom-left-radius: 1rem;
+            backdrop-filter: saturate(180%) blur(12px);
+            -webkit-backdrop-filter: saturate(180%) blur(12px);
+        }
+
+        #mobileSliderMenu.active {
+            right: 0; /* Visible state */
+            box-shadow: -12px 0 25px rgba(0, 0, 0, 0.25), inset 4px 0 12px rgba(255, 255, 255, 0.7);
+        }
+
+        #sliderMenuContent {
+            flex-grow: 1; /* Allows menu items to fill empty space */
+            padding: 1.5rem 0;
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+
+        #sliderMenuContent .menu-item {
+            display: flex;
+            align-items: center;
+            padding: 0.75rem 1.75rem;
+            color: #4338ca; /* indigo-700 */
+            font-weight: 600; /* font-semibold */
+            font-size: 1.125rem; /* text-lg */
+            border-radius: 0.75rem;
+            transition: background-color 0.3s ease, color 0.3s ease, transform 0.2s ease;
+            text-decoration: none; /* Removes underline */
+            box-shadow: 0 0 0 0 transparent;
+            user-select: none;
+            position: relative;
+            overflow: hidden;
+        }
+
+        #sliderMenuContent .menu-item::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            height: 100%;
+            width: 4px;
+            background: #4338ca;
+            border-top-right-radius: 0.75rem;
+            border-bottom-right-radius: 0.75rem;
+            transform: scaleY(0);
+            transform-origin: center;
+            transition: transform 0.3s ease;
+            z-index: 1;
+        }
+
+        #sliderMenuContent .menu-item:hover::before,
+        #sliderMenuContent .menu-item:focus-visible::before {
+            transform: scaleY(1);
+        }
+
+        #sliderMenuContent .menu-item:hover {
+            background-color: #4338ca; /* indigo-700 */
+            color: #e0e7ff; /* indigo-100 */
+            transform: translateX(6px);
+            box-shadow: 0 8px 15px rgba(67, 56, 202, 0.3);
+            z-index: 10;
+            outline: none;
+        }
+
+        #sliderMenuContent .menu-item:focus-visible {
+            outline: 2px solid #4338ca;
+            outline-offset: 2px;
+        }
+
+        /* Overlay backdrop */
+        #sliderBackdrop {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.45); /* Dark backdrop */
+            z-index: 999; /* Stays below the slider */
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.35s cubic-bezier(0.4, 0, 0.2, 1), visibility 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+            backdrop-filter: blur(2px);
+            -webkit-backdrop-filter: blur(2px);
+        }
+
+        #sliderBackdrop.active {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        /* New styles for notification dropdown - caret */
+        #notificationDropdown::before {
+            content: '';
+            position: absolute;
+            top: -10px; /* Upwards from dropdown */
+            right: 18px; /* Aligned with notification button */
+            border-width: 0 10px 10px 10px; /* Creates a triangle */
+            border-color: transparent transparent white transparent; /* White triangle */
+            filter: drop-shadow(0 -2px 1px rgba(0,0,0,0.05)); /* Light shadow */
+            z-index: 51; /* Will be above dropdown */
+        }
+
+        #notificationDropdown::after {
+            content: '';
+            position: absolute;
+            top: -11px; /* 1px above for border */
+            right: 343px; /* Aligned with notification button */
+            border-width: 0 10px 10px 10px;
+            border-color: transparent transparent #e2e8f0 transparent; /* Border color */
+            z-index: 50; /* Above dropdown but below white triangle */
+        }
+
+        /* Adjust notification dropdown position for mobile screens (if needed) */
+        @media (max-width: 639px) { /* Below sm breakpoint */
+            #notificationDropdown::before,
+            #notificationDropdown::after {
+                right: 25px; /* Adjust position for small screens */
+            }
+        }
+
+        /* Additional styles for spinner */
+        .spinner {
+            border: 2px solid rgba(0, 0, 0, 0.1);
+            border-left-color: #4f46e5; /* indigo-600 */
+            border-radius: 50%;
+            width: 16px;
+            height: 16px;
+            animation: spin 1s linear infinite;
+        }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+        /* New styles for login/logout buttons */
+        .btn-login {
+            background-color: #22c55e; /* green-500 */
+            color: white;
+        }
+
+        .btn-login:hover {
+            background-color: #16a34a; /* green-600 */
+        }
+
+        .btn-login:focus {
+            outline: none;
+            box-shadow: 0 0 0 2px #4ade80, 0 0 0 4px rgba(34, 197, 94, 0.5); /* green-300 ring */
+        }
+
+        .btn-logout {
+            background-color: #ef4444; /* red-500 */
+            color: white;
+        }
+
+        .btn-logout:hover {
+            background-color: #dc2626; /* red-600 */
+        }
+
+        .btn-logout:focus {
+            outline: none;
+            box-shadow: 0 0 0 2px #f87171, 0 0 0 4px rgba(239, 68, 68, 0.5); /* red-300 ring */
+        }
+
+        /* Promotion Card Specific Styles */
+        .promotion-card {
+            background-color: #ffffff;
+            border-radius: 0.75rem; /* rounded-xl */
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06); /* shadow-md */
+            padding: 0; /* No padding */
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            position: relative; /* For positioning the sponsored tag */
+            overflow: hidden;
+            border: 1px solid #e2e8f0; /* border-gray-200 */
+        }
+
+        /* Container for the 16:9 image */
+        .promotion-image-wrapper {
+            position: relative;
+            width: 100%;
+            padding-bottom: 56.25%; /* 16:9 Aspect Ratio (9 / 16 * 100) */
+            overflow: hidden;
+            border-radius: 0.5rem; /* rounded-lg */
+        }
+
+        .promotion-image-wrapper img {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover; /* Ensures the image covers the area, cropping if necessary */
+            border-radius: 0.5rem; /* rounded-lg */
+        }
+
+        .promotion-card a.promotion-link {
+            display: block;
+            width: 100%;
+            height: 100%; /* Make the link take full height of the card */
+        }
+
+        /* New style for the sponsored tag */
+        .sponsored-tag {
+            position: absolute;
+            top: 0.6rem; /* 12px from top */
+            left: 0.6rem; /* 12px from left */
+            background-color: rgba(255, 255, 255, 0.2); /* Slightly transparent white */
+            color: #ffffff;
+            padding: 0.25rem 0.75rem; /* py-1 px-3 */
+            border-radius: 1rem; /* rounded-lg */
+            font-size: 0.3rem; /* text-xs */
+            font-weight: 600; /* font-semibold */
+            text-transform: uppercase;
+            letter-spacing: 0.05em; /* tracking-wider */
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); /* subtle shadow */
+            z-index: 10; /* Ensure it's above the image */
+            backdrop-filter: blur(4px); /* Frosted glass effect */
+            -webkit-backdrop-filter: blur(4px);
+            border: 1px solid rgba(255, 255, 255, 0.3); /* Light border */
+        }
+
+        /* Task-specific styles */
+        .task-card {
+            background-color: #ffffff;
+            border-radius: 0.75rem; /* rounded-xl */
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06); /* shadow-md */
+            padding: 1.5rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+            border: 1px solid #e2e8f0; /* border-gray-200 */
+            transition: all 0.3s ease;
+        }
+
+        .task-card:hover {
+            transform: translateY(-0.25rem);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        }
+
+    </style>
+</head>
+<body class="bg-gradient-to-b from-cyan-100 to-blue-200 min-h-screen flex flex-col">
+
+    <!-- Header Section (from header.html) -->
+    <header class="bg-white shadow-xl sticky top-0 z-50 border-b border-gray-200">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 flex items-center justify-between">
+            <div class="flex items-center space-x-3 sm:space-x-4">
+                <img alt="প্রোফাইল ছবি"
+                     class="w-10 h-10 sm:w-12 sm:h-12 rounded-full border-2 border-indigo-500 shadow-md"
+                     loading="lazy"
+                     src="https://i.pravatar.cc/300?img=1"
+                     id="header-profile-logo"/>
+                <div class="hidden sm:block">
+                    <p id="welcomeMessage" class="text-gray-700 font-semibold text-base sm:text-lg leading-tight select-none">Your Name</p>
+                    <p class="text-gray-500 text-xs sm:text-sm select-none">আপনার প্রোফাইল</p>
+                </div>
+                <h1 class="text-2 sm:text-3xl font-extrabold text-indigo-600 tracking-wide select-none ml-4 sm:ml-6">
+                    <span>Dashboard</span>
+                </h1>
+            </div>
+
+            <div class="flex items-center space-x-3 sm:space-x-4">
+                <div class="flex items-center space-x-3">
+                    <div id="userPointsCard" aria-label="আপনার পয়েন্ট"
+                         class="flex items-center bg-indigo-50 text-indigo-700 font-semibold px-2 py-1 rounded-full shadow select-none text-xs scale-90 hidden">
+                        <i class="fas fa-coins mr-1 text-yellow-400 text-sm"></i>
+                        <span id="userPointsDisplay">0 Points</span>
+                    </div>
+
+                    <div id="signInStatusCard" aria-label="সাইন-ইন স্ট্যাটাস"
+                         class="flex items-center bg-red-50 text-red-700 font-semibold px-2 py-1 rounded-full shadow select-none text-xs scale-90 hidden cursor-pointer">
+                        <i class="fas fa-user-circle mr-1 text-red-500 text-sm"></i>
+                        <span id="signInStatusDisplay">লগইন করুন</span>
+                    </div>
+
+                    <div id="loadingStatusCard" class="flex items-center bg-gray-100 text-gray-600 font-semibold px-2 py-1 rounded-full shadow select-none text-xs scale-90">
+                        <div class="spinner mr-2"></div>
+                        <span>লোড হচ্ছে...</span>
+                    </div>
+                </div>
+
+                <button id="notificationButton" aria-label="নোটিফিকেশন"
+                        class="relative text-indigo-600 hover:text-indigo-800 transition focus:outline-none">
+                    <i class="fas fa-bell text-lg sm:text-xl"></i>
+                    <span class="absolute -top-1 -right-1 sm:-top-2 sm:-right-2 bg-red-600 text-white text-xs rounded-full px-1 sm:px-1.5 shadow-lg" id="notificationCountDisplay">0</span>
+                </button>
+
+                <div id="notificationDropdown" class="absolute top-16 right-4 sm:right-6 md:right-10 bg-white border border-gray-200 rounded-lg shadow-lg w-64 md:w-80 z-50 hidden">
+                    <div class="px-4 py-3 border-b border-gray-200 flex justify-between items-center">
+                        <h3 class="font-semibold text-gray-800">নোটিফিকেশনস</h3>
+                        <span class="text-xs text-gray-500" id="newNotificationCount">০টি নতুন</span>
+                    </div>
+                    <div class="py-2 max-h-60 overflow-y-auto" id="notificationList">
+                    </div>
+                    <div class="px-4 py-3 border-t border-gray-200 text-center">
+                        <a href="#" class="text-sm text-blue-600 hover:text-blue-800 font-medium">সকল নোটিফিকেশন দেখুন</a>
+                    </div>
+                </div>
+                <button id="mobileMenuBtn" aria-label="মেনু"
+                        aria-controls="mobileSliderMenu"
+                        aria-expanded="false"
+                        class="md:hidden text-indigo-600 hover:text-indigo-800 text-xl sm:text-2xl focus:outline-none">
+                    <i class="fas fa-bars"></i>
+                </button>
+
+                <nav aria-label="প্রধান নেভিগেশন"
+                     class="hidden md:flex items-center space-x-6 lg:space-x-8 text-indigo-600 font-semibold select-none text-base"
+                     role="navigation">
+                    <a class="hover:text-indigo-800 transition" href="dashboard.html">ড্যাশবোর্ড</a>
+                    <a class="hover:text-indigo-800 transition" href="mytasklist.html">টাস্ক</a>
+                    <a class="hover:text-indigo-800 transition" href="leaderboard.html">লিডারবোর্ড</a>
+                    <a class="hover:text-indigo-800 transition" href="order.html">অর্ডার</a>
+                </nav>
+            </div>
+        </div>
+
+        <div id="mobileSliderMenu" role="menu" aria-label="মোবাইল স্লাইডার মেনু">
+            <div class="flex items-center space-x-3 p-4 border-b border-gray-200 mb-4">
+                <img alt="স্লাইডার প্রোফাইল ছবি"
+                     class="w-16 h-16 rounded-full border-2 border-indigo-500 shadow-md"
+                     loading="lazy"
+                     src="https://i.pravatar.cc/300?img=1"
+                     id="slider-profile-pic"/>
+                <div>
+                    <p id="sliderUserName" class="text-gray-700 font-semibold text-lg leading-tight">Your Name</p>
+                    <p class="text-gray-500 text-sm">আপনার প্রোফাইল</p>
+                </div>
+            </div>
+        <div id="sliderMenuContent" role="none">
+          <a class="menu-item" href="dashboard.html" role="menuitem" tabindex="0">ড্যাশবোর্ড</a>
+          <a class="menu-item" href="mytasklist.html" role="menuitem" tabindex="0">আমার টাস্ক</a>
+          <a class="menu-item" href="completedtask.html" role="menuitem" tabindex="0">সম্পূর্ণ করা টাস্ক</a>
+          <a class="menu-item" href="order.html" role="menuitem" tabindex="0">অর্ডার করুন</a>
+          <a class="menu-item" href="reffer.html" role="menuitem" tabindex="0">রেফার করুন</a>
+          <a class="menu-item" href="leaderboard.html" role="menuitem" tabindex="0">লিডারবোর্ড</a>
+        </div>
+            <div class="p-4 mt-auto border-t border-gray-200">
+                <button id="loginLogoutButton" class="w-full py-2 px-4 rounded-md font-semibold transition-colors duration-200
+                                                focus:outline-none focus:ring-2 focus:ring-offset-2">
+                    লগইন করুন
+                </button>
+            </div>
+        </div>
+        <div id="sliderBackdrop" class="hidden" tabindex="-1" aria-hidden="true"></div>
+    </header>
+
+    <!-- Promotion Card Container -->
+    <div id="promotionCardContainer" class="max-w-3xl mx-auto px-6 py-6 w-full">
+        <!-- Promotion card will be loaded here by JavaScript -->
+    </div>
+
+    <main class="flex-grow max-w-3xl mx-auto px-6 py-12 w-full mt-[1px]">
+        <h2 class="text-3xl font-extrabold text-blue-800 mb-8 text-center">আপনার টাস্কসমূহ</h2>
+        <div id="task-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            <!-- Tasks will be loaded here by JavaScript -->
+        </div>
+        <!-- NEW: Load More button container -->
+        <div id="pagination-buttons" class="flex justify-center items-center space-x-4 mt-8">
+            <button id="prev-page-btn" class="bg-blue-600 text-white font-semibold p-3 rounded-full transition-colors hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed">
+                <i class="fas fa-chevron-left"></i>
+            </button>
+            <div id="page-info" class="text-lg font-semibold text-gray-700">
+                পেজ 1
+            </div>
+            <button id="next-page-btn" class="bg-blue-600 text-white font-semibold p-3 rounded-full transition-colors hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed">
+                <i class="fas fa-chevron-right"></i>
+            </button>
+        </div>
+
+        <h2 class="text-3xl font-extrabold text-blue-800 mb-8 text-center mt-12">আপনার জমা করা অর্ডারসমূহ</h2>
+        <div id="orders-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            <!-- Orders will be loaded here by JavaScript -->
+        </div>
+    </main>
+
+    <footer class="bg-blue-700 text-white py-6 mt-12">
+        <div class="max-w-5xl mx-auto px-6 text-center text-sm">© 2025 থিম. সর্বস্বত্ব সংরক্ষিত।</div>
+    </footer>
+
+    <script type="module">
+        // Firebase Modules
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-app.js";
+        import { getDatabase, ref, get, child, query, limitToFirst, startAfter, endBefore, orderByKey } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-database.js";
+        import { getAuth, onAuthStateChanged, signOut, signInAnonymously } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-auth.js";
+
+        // Firebase Configuration (from header.html)
+        const firebaseConfig = {
+            apiKey: "AIzaSyAC4h55aA0Zz--V5ejyndzR5WC_-9rAPio",
+            authDomain: "subscribe-bot-6f9b2.firebaseapp.com",
+            databaseURL: "https://subscribe-bot-6f9b2-default-rtdb.firebaseio.com",
+            projectId: "subscribe-bot-6f9b2",
+            storageBucket: "subscribe-bot-6f9b2.firebasestorage.app",
+            messagingSenderId: "141787931031",
+            appId: "1:141787931031:web:2108a3e930f5ce4fbc64d2",
+            measurementId: "G-HSDKCJB14Y"
+        };
+
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const db = getDatabase(app);
+        const auth = getAuth(app);
+
+        // Make db and auth globally accessible for convenience if other scripts were relying on window.db/window.auth
+        window.db = db;
+        window.auth = auth;
+
+        // Utility function for escaping HTML
+        function esc(str = "") {
+            return String(str)
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;");
+        }
+
+        // --- Header Specific JavaScript (from header.html) ---
+        let headerProfileLogo, userPointsCard, userPointsDisplay, signInStatusCard, signInStatusDisplay,
+            loadingStatusCard, notificationCountDisplay, newNotificationCount, notificationList,
+            welcomeMessage, sliderProfilePic, sliderUserName, loginLogoutButton, notificationButton,
+            notificationDropdown, mobileMenuBtn, mobileSliderMenu, sliderBackdrop;
+
+        // Function to get elements after the template is loaded (now directly from DOM)
+        function getHeaderElements() {
+            headerProfileLogo = document.getElementById('header-profile-logo');
+            userPointsCard = document.getElementById('userPointsCard');
+            userPointsDisplay = document.getElementById('userPointsDisplay');
+            signInStatusCard = document.getElementById('signInStatusCard');
+            signInStatusDisplay = document.getElementById('signInStatusDisplay');
+            loadingStatusCard = document.getElementById('loadingStatusCard');
+            notificationCountDisplay = document.getElementById('notificationCountDisplay');
+            newNotificationCount = document.getElementById('newNotificationCount');
+            notificationList = document.getElementById('notificationList');
+            welcomeMessage = document.getElementById('welcomeMessage'); // This element is now directly in HTML, not from template
+            sliderProfilePic = document.getElementById('slider-profile-pic');
+            sliderUserName = document.getElementById('sliderUserName');
+            loginLogoutButton = document.getElementById('loginLogoutButton');
+            notificationButton = document.getElementById('notificationButton');
+            notificationDropdown = document.getElementById('notificationDropdown');
+            mobileMenuBtn = document.getElementById('mobileMenuBtn');
+            mobileSliderMenu = document.getElementById('mobileSliderMenu');
+            sliderBackdrop = document.getElementById('sliderBackdrop');
+        }
+
+        const DEFAULT_PROFILE_PIC_URL = 'https://i.pravatar.cc/300'; // Updated to match dashboard's default
+
+        // signInStatusCard click event listener
+        function setupSignInCardListener() {
+            if (signInStatusCard) {
+                signInStatusCard.addEventListener('click', () => {
+                    window.location.href = 'login.html';
+                });
+            }
+        }
+
+        async function loadUserDataFromFirebase() {
+            // First hide all cards and show loading spinner
+            if (userPointsCard) userPointsCard.classList.add('hidden');
+            if (signInStatusCard) signInStatusCard.classList.add('hidden');
+            if (loadingStatusCard) loadingStatusCard.classList.remove('hidden');
+
+            onAuthStateChanged(auth, async (user) => {
+                let displayNameToShow = "ইউজার"; // Default placeholder if no specific name is found
+
+                if (user) {
+                    try {
+                        const userRef = child(ref(db), `users/${user.uid}`);
+                        const userSnap = await get(userRef);
+
+                        if (userSnap.exists()) {
+                            const userData = userSnap.val();
+
+                            // Load profile picture
+                            if (userData.profilePictureUrl) {
+                                if (headerProfileLogo) headerProfileLogo.src = userData.profilePictureUrl;
+                                if (sliderProfilePic) sliderProfilePic.src = userData.profilePictureUrl;
+                            } else {
+                                if (headerProfileLogo) headerProfileLogo.src = DEFAULT_PROFILE_PIC_URL;
+                                if (sliderProfilePic) sliderProfilePic.src = DEFAULT_PROFILE_PIC_URL;
+                            }
+                            // User's display name
+                            if (userData.displayName) {
+                                displayNameToShow = userData.displayName;
+                            } else if (user.email) {
+                                displayNameToShow = user.email;
+                            }
+
+                            // Load points and show card
+                            if (typeof userData.points !== 'undefined') {
+                                if (userPointsDisplay) userPointsDisplay.textContent = `${esc(userData.points)} Points`;
+                            } else {
+                                if (userPointsDisplay) userPointsDisplay.textContent = `0 Points`;
+                            }
+                            if (userPointsCard) userPointsCard.classList.remove('hidden');
+
+                        } else {
+                            if (headerProfileLogo) headerProfileLogo.src = DEFAULT_PROFILE_PIC_URL;
+                            if (sliderProfilePic) sliderProfilePic.src = DEFAULT_PROFILE_PIC_URL;
+                            if (userPointsDisplay) userPointsDisplay.textContent = `0 Points`;
+                            if (userPointsCard) userPointsCard.classList.remove('hidden');
+
+                            if (user.email) {
+                                displayNameToShow = user.email;
+                            }
+                        }
+                        // If logged in, hide loading and sign-in cards
+                        if (loadingStatusCard) loadingStatusCard.classList.add('hidden');
+                        if (signInStatusCard) signInStatusCard.classList.add('hidden');
+
+                        // Update welcome message
+                        if (welcomeMessage) welcomeMessage.textContent = `স্বাগতম, ${displayNameToShow}`; // Changed to match dashboard's initial text
+                        if (sliderUserName) sliderUserName.textContent = `স্বাগতম, ${displayNameToShow}`; // Changed to match dashboard's initial text
+
+                        if (loginLogoutButton) {
+                            loginLogoutButton.textContent = 'লগআউট করুন';
+                            loginLogoutButton.classList.remove('btn-login');
+                            loginLogoutButton.classList.add('btn-logout');
+                            loginLogoutButton.onclick = async () => {
+                                await signOut(auth);
+                                closeSliderMenu();
+                            };
+                        }
+
+                    } catch (error) {
+                        console.error("Error loading user data from Realtime Database:", error);
+                        if (headerProfileLogo) headerProfileLogo.src = DEFAULT_PROFILE_PIC_URL;
+                        if (sliderProfilePic) sliderProfilePic.src = DEFAULT_PROFILE_PIC_URL;
+                        if (userPointsDisplay) userPointsDisplay.textContent = `ত্রুটি`;
+                        if (userPointsCard) userPointsCard.classList.add('hidden');
+                        if (signInStatusCard) signInStatusCard.classList.add('hidden');
+                        if (loadingStatusCard) loadingStatusCard.classList.add('hidden');
+                        if (welcomeMessage) welcomeMessage.textContent = `স্বাগতম, ইউজার`; // Changed to match dashboard's initial text
+                        if (sliderUserName) sliderUserName.textContent = `স্বাগতম, ইউজার`; // Changed to match dashboard's initial text
+
+                        if (loginLogoutButton) {
+                            loginLogoutButton.textContent = 'লগইন করুন';
+                            loginLogoutButton.classList.remove('btn-logout');
+                            loginLogoutButton.classList.add('btn-login');
+                            loginLogoutButton.onclick = () => { /* Implement login action here */ };
+                        }
+                    }
+                } else {
+                    // No user logged in
+                    if (headerProfileLogo) headerProfileLogo.src = DEFAULT_PROFILE_PIC_URL;
+                    if (sliderProfilePic) sliderProfilePic.src = DEFAULT_PROFILE_PIC_URL;
+                    if (userPointsDisplay) userPointsDisplay.textContent = `লগইন করুন`;
+                    if (userPointsCard) userPointsCard.classList.add('hidden');
+                    if (signInStatusCard) signInPointsCard.classList.remove('hidden');
+                    if (loadingStatusCard) loadingStatusCard.classList.add('hidden');
+                    if (welcomeMessage) welcomeMessage.textContent = `স্বাগতম, অতিথি`; // Changed to match dashboard's initial text
+                    if (sliderUserName) sliderUserName.textContent = `স্বাগতম, অতিথি`; // Changed to match dashboard's initial text
+
+                    // Attempt anonymous sign-in if no user is signed in
+                    signInAnonymously(auth).then(() => {
+                        console.log("Signed in anonymously for initial Firebase access.");
+                    }).catch((error) => {
+                        console.error("Error signing in anonymously:", error);
+                    });
+                }
+            });
+        }
+
+        // --- Notification loading functions ---
+        async function loadNotifications(userId) {
+            try {
+                const snapshot = await get(child(ref(db), "notifications"));
+
+                if (!snapshot.exists()) {
+                    return [];
+                }
+
+                const notificationsData = snapshot.val();
+                const allNotificationData = [];
+
+                for (const notificationId in notificationsData) {
+                    const data = notificationsData[notificationId];
+                    const isRead = data.readBy && userId ? data.readBy[userId] : false;
+                    allNotificationData.push({ id: notificationId, ...data, read: isRead });
+                }
+
+                allNotificationData.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
+
+                return allNotificationData;
+            } catch (error) {
+                console.error("Error loading notifications from Realtime Database:", error);
+                return [];
+            }
+        }
+
+        async function markNotificationAsRead(notificationId, userId) {
+            try {
+                await update(ref(db, `notifications/${notificationId}/readBy/${userId}`), true);
+                loadAllNotificationsForUI();
+            } catch (error) {
+                console.error("Error marking notification as read:", error);
+            }
+        }
+
+        async function loadAllNotificationsForUI() {
+            let unreadCount = 0;
+
+            onAuthStateChanged(auth, async (user) => {
+                const currentUserId = user ? user.uid : null;
+                const allNotifications = await loadNotifications(currentUserId);
+
+                if (notificationList) notificationList.innerHTML = '';
+
+                if (allNotifications.length === 0) {
+                    if (notificationList) notificationList.innerHTML = `<p class="text-center text-gray-500 py-2">কোনো নোটিফিকেশন নেই।</p>`;
+                } else {
+                    allNotifications.forEach((notification) => {
+                        if (!notification.read) {
+                            unreadCount++;
+                        }
+
+                        const notificationItem = document.createElement('a');
+                        notificationItem.href = notification.link || '#';
+                        notificationItem.className = `block px-4 py-2 hover:bg-gray-100 border-b border-gray-100 last:border-b-0 ${notification.read ? 'opacity-70' : 'font-semibold'}`;
+
+                        let timeAgoText = "এইমাত্র";
+                        if (notification.timestamp) {
+                            const date = new Date(notification.timestamp);
+                            const now = new Date();
+                            const diffMs = now - date;
+                            const diffMinutes = Math.round(diffMs / (1000 * 60));
+                            const diffHours = Math.round(diffMs / (1000 * 60 * 60));
+                            const diffDays = Math.round(diffMs / (1000 * 60 * 60 * 24));
+
+                            if (diffMinutes < 1) {
+                                timeAgoText = "এইমাত্র";
+                            } else if (diffMinutes < 60) {
+                                timeAgoText = `${diffMinutes} মিনিট আগে`;
+                            } else if (diffHours < 24) {
+                                timeAgoText = `${diffHours} ঘন্টা আগে`;
+                            } else {
+                                timeAgoText = `${diffDays} দিন আগে`;
+                            }
+                        }
+
+                        notificationItem.innerHTML = `
+                            <p class="text-sm text-gray-800">${esc(notification.title || "Untitled Notification")}</p>
+                            ${notification.message ? `<p class="text-xs text-gray-500 mt-1">${esc(notification.message)}</p>` : ""}
+                            <p class="text-xs text-gray-400 mt-1">${timeAgoText}</p>
+                        `;
+                        if (notificationList) notificationList.appendChild(notificationItem);
+
+                        if (!notification.read && currentUserId) {
+                            notificationItem.addEventListener('click', () => {
+                                markNotificationAsRead(notification.id, currentUserId);
+                            });
+                        }
+                    });
+                }
+                if (notificationCountDisplay) notificationCountDisplay.textContent = unreadCount.toString();
+                if (newNotificationCount) newNotificationCount.textContent = `${unreadCount}টি নতুন`;
+
+                if (unreadCount === 0 && allNotifications.length === 0) {
+                    if (notificationList) notificationList.innerHTML = `<p class="text-center text-gray-500 py-2">কোনো নোটিফিকেশন নেই।</p>`;
+                } else if (unreadCount === 0 && allNotifications.length > 0) {
+                    if (newNotificationCount) newNotificationCount.textContent = `০টি নতুন`;
+                }
+            });
+        }
+
+        // --- Mobile Slider Menu Logic ---
+        function setupMobileMenuListeners() {
+            if (mobileMenuBtn && mobileSliderMenu && sliderBackdrop) {
+                mobileMenuBtn.addEventListener('click', () => {
+                    mobileSliderMenu.classList.add('active');
+                    sliderBackdrop.classList.remove('hidden');
+                    sliderBackdrop.classList.add('active');
+                    document.body.style.overflow = 'hidden';
+                    mobileMenuBtn.setAttribute('aria-expanded', 'true');
+                });
+
+                const closeSliderMenu = () => {
+                    mobileSliderMenu.classList.remove('active');
+                    sliderBackdrop.classList.remove('active');
+                    setTimeout(() => {
+                        sliderBackdrop.classList.add('hidden');
+                    }, 350);
+                    document.body.style.overflow = '';
+                    mobileMenuBtn.setAttribute('aria-expanded', 'false');
+                };
+
+                sliderBackdrop.addEventListener('click', closeSliderMenu);
+            } else {
+                console.warn("Mobile slider menu elements (mobileMenuBtn, mobileSliderMenu, or sliderBackdrop) not found.");
+            }
+        }
+
+        // Notification Dropdown Logic
+        function setupNotificationDropdownListeners() {
+            if (notificationButton && notificationDropdown) {
+                notificationButton.addEventListener('click', (event) => {
+                    event.stopPropagation();
+                    notificationDropdown.classList.toggle('hidden');
+                });
+
+                document.addEventListener('click', (event) => {
+                    if (!notificationDropdown.contains(event.target) && !notificationButton.contains(event.target)) {
+                        notificationDropdown.classList.add('hidden');
+                    }
+                });
+            }
+        }
+
+        // --- Task Loading Logic (from dashboard.html) ---
+        const taskContainer = document.getElementById('task-container');
+        const prevPageBtn = document.getElementById('prev-page-btn');
+        const nextPageBtn = document.getElementById('next-page-btn');
+        const pageInfo = document.getElementById('page-info');
+        
+        const taskLimit = 20;
+        let currentPage = 1;
+        let lastLoadedKeys = []; // Stores the last key of each loaded page for pagination
+
+        /**
+         * Determines the Tailwind CSS classes for a task category based on its name.
+         * @param {string} cat - The category name.
+         * @returns {string} Tailwind CSS classes for background, text, and border color.
+         */
+        function categoryColor(cat) {
+            const c = (cat || "").toLowerCase();
+            if (c.includes("youtube")) return "bg-red-100 text-red-700 border-red-200";
+            if (c.includes("facebook")) return "bg-blue-100 text-blue-700 border-blue-200";
+            if (c.includes("promo")) return "bg-purple-100 text-purple-700 border-purple-200";
+            if (c.includes("short") || c.includes("video")) return "bg-amber-100 text-amber-700 border-amber-200";
+            if (c.includes("bonus")) return "bg-emerald-100 text-emerald-700 border-emerald-200";
+            return "bg-gray-100 text-gray-700 border-gray-200";
+        }
+
+        /**
+         * Creates an HTML skeleton card for loading state.
+         * @returns {HTMLElement} The created skeleton card element.
+         */
+        function createSkeletonCard() {
+            const card = document.createElement("div");
+            card.className = `
+                group relative flex flex-col gap-2 p-4 rounded-xl bg-white/80 backdrop-blur
+                border border-blue-100 shadow-sm transition duration-200 skeleton-card
+            `;
+            card.innerHTML = `
+                <div class="shimmer"></div>
+                <div class="flex items-center gap-3">
+                    <div class="skeleton-circle w-14 h-14"></div>
+                    <div class="flex-1">
+                        <div class="skeleton-line h-6 w-3/4 mb-2"></div>
+                        <div class="skeleton-line h-4 w-1/2"></div>
+                    </div>
+                </div>
+                <div class="absolute top-3 right-3 skeleton-line h-5 w-20 rounded-full"></div>
+                <div class="skeleton-line h-4 w-full mt-2"></div>
+                <div class="skeleton-line h-4 w-5/6 mt-1"></div>
+                <div class="flex justify-between items-center text-sm text-gray-600 font-medium mt-3 border-t pt-2">
+                    <div class="skeleton-line h-4 w-24"></div>
+                    <div class="skeleton-line h-4 w-24"></div>
+                </div>
+                <div class="skeleton-line h-9 w-full rounded-md mt-3"></div>
+            `;
+            return card;
+        }
+
+        /**
+         * Loads tasks from Firebase Realtime Database and displays them.
+         * Shows skeleton cards while loading.
+         * @param {string|null} startKey - The key to start fetching from for the next page.
+         * @param {boolean} isPrevious - If true, loads the previous page.
+         */
+        async function loadTasks(startKey = null, isPrevious = false) {
+            taskContainer.innerHTML = '';
+            for (let i = 0; i < 6; i++) {
+                taskContainer.appendChild(createSkeletonCard());
+            }
+
+            try {
+                let tasksRef = ref(db, 'tasks');
+                let tasksQuery;
+
+                if (isPrevious) {
+                    // Fetch one extra item to check for previous page
+                    tasksQuery = query(tasksRef, orderByKey(), endBefore(startKey), limitToLast(taskLimit));
+                } else if (startKey) {
+                    tasksQuery = query(tasksRef, orderByKey(), startAfter(startKey), limitToFirst(taskLimit));
+                } else {
+                    tasksQuery = query(tasksRef, orderByKey(), limitToFirst(taskLimit));
+                }
+
+                const snapshot = await get(tasksQuery);
+
+                if (!snapshot.exists()) {
+                    taskContainer.innerHTML = `<div class="col-span-full text-center text-blue-700">কোনো টাস্ক নেই।</div>`;
+                    updatePaginationControls(0);
+                    return;
+                }
+
+                const tasksData = snapshot.val();
+                let taskIds = Object.keys(tasksData || {});
+                
+                // If fetching previous page, reverse the order
+                if (isPrevious) {
+                    taskIds = taskIds.reverse();
+                }
+
+                taskContainer.innerHTML = '';
+                
+                // Check if there are any tasks to display
+                if (taskIds.length === 0) {
+                    taskContainer.innerHTML = `<div class="col-span-full text-center text-blue-700">কোনো টাস্ক নেই।</div>`;
+                    updatePaginationControls(0);
+                    return;
+                }
+
+                // Store keys for pagination
+                const firstKey = taskIds[0];
+                const lastKey = taskIds[taskIds.length - 1];
+                
+                if (!isPrevious) {
+                    lastLoadedKeys.push(firstKey);
+                }
+
+                taskIds.forEach((taskId) => {
+                    const t = tasksData[taskId];
+                    
+                    let channelLogoHTML = `
+                        <div class="w-14 h-14 rounded-full bg-blue-500 border border-blue-700 flex items-center justify-center text-white font-bold text-lg">
+                            <i class="fas fa-tasks"></i>
+                        </div>
+                    `;
+                    
+                    if (t.category && t.category.toLowerCase().includes('youtube')) {
+                         channelLogoHTML = `
+                            <div class="w-14 h-14 rounded-full bg-red-600 border border-red-700 flex items-center justify-center text-white p-2">
+                                <i class="fab fa-youtube text-3xl"></i>
+                            </div>
+                         `;
+                    } else if (t.category && t.category.toLowerCase().includes('facebook')) {
+                         channelLogoHTML = `
+                            <div class="w-14 h-14 rounded-full bg-blue-600 border border-blue-800 flex items-center justify-center text-white p-2">
+                                <i class="fab fa-facebook-f text-3xl"></i>
+                            </div>
+                         `;
+                    }
+
+                    const card = document.createElement("div");
+                    card.className = `
+                        group relative flex flex-col gap-2 p-4 rounded-xl bg-white/80 backdrop-blur
+                        border border-blue-100 shadow-sm hover:shadow-md hover:-translate-y-0.5
+                        transition duration-200
+                    `;
+                    card.innerHTML = `
+                        <div class="flex items-center gap-3">
+                            ${channelLogoHTML}
+                            <h3 class="font-bold text-lg text-blue-700 leading-snug flex-1">
+                                ${esc(t.title || "Untitled")}
+                            </h3>
+                        </div>
+                        <span class="absolute top-3 right-3 text-xs px-2 py-1 rounded-full border ${categoryColor(t.category)}">
+                            ${esc(t.category || "Uncat")}
+                        </span>
+                        ${t.description ? `<p class="text-sm text-slate-600 mt-2">${esc(t.description)}</p>` : ""}
+                        <div class="flex justify-between items-center text-sm text-gray-600 font-medium mt-3 border-t pt-2">
+                            <div>
+                                <i class="fas fa-bullseye text-cyan-500 mr-1"></i>
+                                টার্গেট: <span class="font-semibold text-slate-800">${esc(t.completed || "0")}/${esc(t.target || "0")}</span>
+                            </div>
+                            <div>
+                                <i class="fas fa-user-tie text-cyan-500 mr-1"></i>
+                                আপলোড করেছেন: <span class="font-medium text-slate-800">${esc(t.uploaderName || "Unknown")}</span>
+                            </div>
+                        </div>
+                        <button class="view-details-btn mt-3 inline-flex items-center justify-center text-sm font-medium
+                            text-white bg-blue-600 hover:bg-blue-700 rounded-md px-3 py-1.5
+                            focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-1"
+                            data-task-id="${taskId}"> বিস্তারিত
+                        </button>
+                    `;
+                    taskContainer.appendChild(card);
+                });
+
+                // Add event listeners to "বিস্তারিত" buttons
+                document.querySelectorAll('.view-details-btn').forEach(button => {
+                    button.addEventListener('click', (event) => {
+                        const clickedTaskId = event.target.dataset.taskId;
+                        window.location.href = `taskdetails.html?id=${clickedTaskId}`;
+                    });
+                });
+                
+                updatePaginationControls(taskIds.length, startKey, isPrevious);
+
+            } catch (error) {
+                console.error("Realtime Database থেকে টাস্ক লোড করতে সমস্যা:", error);
+                taskContainer.innerHTML = `<div class="col-span-full text-center text-red-600">ডেটা লোড করতে সমস্যা হয়েছে।</div>`;
+                updatePaginationControls(0);
+            }
+        }
+        
+        /**
+         * Updates the state of the pagination buttons.
+         * @param {number} loadedCount - The number of tasks loaded in the current page.
+         * @param {string|null} startKey - The start key for the current page.
+         * @param {boolean} isPrevious - If the current page is a previous page.
+         */
+        function updatePaginationControls(loadedCount, startKey = null, isPrevious = false) {
+            // Check for more tasks to enable/disable next button
+            // To properly check if there's a next page, we'd need to fetch one more item.
+            // For this simplified version, we'll assume there is a next page if the loaded count matches the limit.
+            if (loadedCount < taskLimit) {
+                 nextPageBtn.disabled = true;
+            } else {
+                 nextPageBtn.disabled = false;
+            }
+
+            // Disable previous button on the first page
+            if (currentPage === 1) {
+                prevPageBtn.disabled = true;
+            } else {
+                prevPageBtn.disabled = false;
+            }
+
+            pageInfo.textContent = `পেজ ${currentPage}`;
+        }
+        
+        // --- Event listeners for pagination buttons ---
+        prevPageBtn.addEventListener('click', () => {
+            if (currentPage > 1) {
+                currentPage--;
+                lastLoadedKeys.pop(); // Remove the last key to get the previous page's starting point
+                const startKey = lastLoadedKeys.pop();
+                lastLoadedKeys.push(startKey); // Push it back
+                loadTasks(startKey, true); // Load the previous page
+            }
+        });
+        
+        nextPageBtn.addEventListener('click', () => {
+            if (lastLoadedKeys.length >= currentPage) {
+                currentPage++;
+                const startKey = lastLoadedKeys[lastLoadedKeys.length - 1];
+                loadTasks(startKey); // Load the next page
+            } else {
+                // This case should ideally not happen if updatePaginationControls works correctly
+                // as the next button would be disabled.
+            }
+        });
+
+        // Function to create a skeleton card for orders
+        function createOrderSkeletonCard() {
+            const card = document.createElement("div");
+            card.className = `task-card skeleton-card`;
+            card.innerHTML = `
+                <div class="shimmer"></div>
+                <div class="w-16 h-16 rounded-full bg-gray-300 skeleton-circle mb-4"></div>
+                <div class="skeleton-line h-6 w-3/4 mb-2"></div>
+                <div class="skeleton-line h-4 w-1/2 mb-4"></div>
+                <div class="flex justify-between w-full text-sm font-medium border-t pt-2">
+                    <div class="skeleton-line h-4 w-1/3"></div>
+                    <div class="skeleton-line h-4 w-1/3"></div>
+                </div>
+                <div class="skeleton-line h-8 w-full rounded-md mt-4"></div>
+            `;
+            return card;
+        }
+
+        // --- Order Loading Logic (New) ---
+        const ordersContainer = document.getElementById('orders-container');
+
+        async function loadOrders() {
+            // Show skeleton cards for orders
+            ordersContainer.innerHTML = '';
+            for (let i = 0; i < 3; i++) {
+                ordersContainer.appendChild(createOrderSkeletonCard());
+            }
+
+            // Listen for user authentication state change
+            onAuthStateChanged(auth, async (user) => {
+                if (!user) {
+                    ordersContainer.innerHTML = `<div class="col-span-full text-center text-blue-700">আপনার অর্ডার দেখতে অনুগ্রহ করে লগইন করুন।</div>`;
+                    return;
+                }
+
+                try {
+                    // Get a snapshot of all orders
+                    const snapshot = await get(ref(db, 'orders'));
+                    
+                    if (!snapshot.exists()) {
+                        ordersContainer.innerHTML = `<div class="col-span-full text-center text-blue-700">আপনার কোনো অর্ডার জমা করা নেই।</div>`;
+                        return;
+                    }
+
+                    const ordersData = snapshot.val();
+                    const userOrders = [];
+
+                    // Filter orders by the current user's ID
+                    for (const orderId in ordersData) {
+                        const order = ordersData[orderId];
+                        if (order.userId === user.uid) {
+                            userOrders.push({ id: orderId, ...order });
+                        }
+                    }
+
+                    // Sort orders by timestamp, newest first
+                    userOrders.sort((a, b) => b.timestamp - a.timestamp);
+
+                    // Clear loading skeletons
+                    ordersContainer.innerHTML = '';
+
+                    if (userOrders.length === 0) {
+                        ordersContainer.innerHTML = `<div class="col-span-full text-center text-blue-700">আপনার কোনো অর্ডার জমা করা নেই।</div>`;
+                        return;
+                    }
+
+                    userOrders.forEach(order => {
+                        const orderCard = document.createElement('div');
+                        orderCard.className = `task-card group relative flex flex-col items-center gap-2 p-4 rounded-xl bg-white/80 backdrop-blur border border-blue-100 shadow-sm transition duration-200`;
+                        
+                        // Get status color
+                        let statusColorClass = 'bg-gray-400';
+                        if (order.status === 'pending') {
+                            statusColorClass = 'bg-yellow-500';
+                        } else if (order.status === 'processing') {
+                            statusColorClass = 'bg-blue-500';
+                        } else if (order.status === 'completed') {
+                            statusColorClass = 'bg-green-500';
+                        }
+
+                        // Get category text
+                        const categoryText = (order.category === 'youtube') ? 'ইউটিউব' : 'ফেসবুক';
+                        
+                        // Get sub-category text
+                        const subCategoryMap = {
+                            'channel-subscribe': 'চ্যানেল সাবস্ক্রাইব',
+                            'video-view': 'ভিডিও ভিউ',
+                            'video-like': 'ভিডিও লাইক',
+                            'video-comment': 'ভিডিও কমেন্ট',
+                            'id-page-follow': 'আইডি/পেজ ফলো',
+                            'id-page-like': 'আইডি/পেজ লাইক',
+                            'post-react': 'পোস্টে রিয়েক্ট',
+                            'post-comment': 'পোস্টে কমেন্ট',
+                            'post-share': 'পোস্ট শেয়ার'
+                        };
+                        const subCategoryText = subCategoryMap[order.subCategory] || order.subCategory;
+
+                        // Format timestamp
+                        let timeAgoText = "এইমাত্র";
+                        if (order.timestamp) {
+                            const date = new Date(order.timestamp);
+                            const now = new Date();
+                            const diffMs = now - date;
+                            const diffMinutes = Math.round(diffMs / (1000 * 60));
+                            const diffHours = Math.round(diffMs / (1000 * 60 * 60));
+                            const diffDays = Math.round(diffMs / (1000 * 60 * 60 * 24));
+
+                            if (diffMinutes < 1) {
+                                timeAgoText = "এইমাত্র";
+                            } else if (diffMinutes < 60) {
+                                timeAgoText = `${diffMinutes} মিনিট আগে`;
+                            } else if (diffHours < 24) {
+                                timeAgoText = `${diffHours} ঘন্টা আগে`;
+                            } else {
+                                timeAgoText = `${diffDays} দিন আগে`;
+                            }
+                        }
+
+                        orderCard.innerHTML = `
+                            <div class="relative w-16 h-16 mb-4">
+                                <i class="fas fa-cubes text-blue-500 text-6xl"></i>
+                                <span class="absolute bottom-0 right-0 w-4 h-4 rounded-full ${statusColorClass} border-2 border-white"></span>
+                            </div>
+                            <h3 class="font-bold text-lg text-blue-700 leading-snug text-center">
+                                ${esc(order.title)}
+                            </h3>
+                            <p class="text-sm text-slate-600 mt-2 text-center">${esc(order.description)}</p>
+                            
+                            <div class="flex flex-col gap-2 w-full mt-4 text-sm text-gray-600 font-medium border-t pt-2">
+                                <div class="flex justify-between items-center">
+                                    <span class="font-semibold text-blue-800">ক্যাটাগরি:</span>
+                                    <span>${esc(categoryText)}</span>
+                                </div>
+                                <div class="flex justify-between items-center">
+                                    <span class="font-semibold text-blue-800">সাব-ক্যাটাগরি:</span>
+                                    <span>${esc(subCategoryText)}</span>
+                                </div>
+                                <div class="flex justify-between items-center">
+                                    <span class="font-semibold text-blue-800">টার্গেট:</span>
+                                    <span>${esc(order.target)}</span>
+                                </div>
+                                <div class="flex justify-between items-center">
+                                    <span class="font-semibold text-blue-800">জমা দেওয়ার সময়:</span>
+                                    <span title="${new Date(order.timestamp).toLocaleString()}">${timeAgoText}</span>
+                                </div>
+                            </div>
+                            <a href="${esc(order.link)}" target="_blank" rel="noopener noreferrer" class="view-link mt-4 inline-flex items-center justify-center text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-md px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-1">
+                                লিংক দেখুন
+                            </a>
+                        `;
+                        ordersContainer.appendChild(orderCard);
+                    });
+                } catch (error) {
+                    console.error("অর্ডার লোড করতে সমস্যা:", error);
+                    ordersContainer.innerHTML = `<div class="col-span-full text-center text-red-600">আপনার অর্ডার লোড করতে সমস্যা হয়েছে।</div>`;
+                }
+            });
+        }
+
+        // --- Promotion Card Logic (from dashboard.html) ---
+        const promotionCardContainer = document.getElementById('promotionCardContainer');
+
+        async function loadPromotionBanner() {
+            // Show skeleton while loading (adjusted for image-only)
+            promotionCardContainer.innerHTML = `
+                <div class="promotion-card skeleton-card">
+                    <div class="shimmer"></div>
+                    <div class="promotion-image-wrapper">
+                        <div class="skeleton-line w-full h-full rounded-lg"></div>
+                    </div>
+                </div>
+            `;
+
+            try {
+                const snapshot = await get(child(ref(db), "promotions"));
+                let latestPromotion = null;
+
+                if (snapshot.exists()) {
+                    const promotionsData = snapshot.val();
+                    const activePromotions = Object.values(promotionsData).filter(p => p.active);
+
+                    if (activePromotions.length > 0) {
+                        latestPromotion = activePromotions.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0))[0];
+                    }
+                }
+
+                if (latestPromotion && latestPromotion.imageUrl && latestPromotion.redirectLink) {
+                    promotionCardContainer.innerHTML = `
+                        <div class="promotion-card">
+                            <a href="${esc(latestPromotion.redirectLink)}" target="_blank" rel="noopener noreferrer" class="block w-full promotion-link">
+                                <div class="promotion-image-wrapper">
+                                    <img src="${esc(latestPromotion.imageUrl)}" alt="প্রমোশন ব্যানার ছবি"/>
+                                </div>
+                            </a>
+                            <!-- Sponsored Tag -->
+                            <div class="sponsored-tag">Sponsored</div>
+                        </div>
+                    `;
+                } else {
+                    promotionCardContainer.innerHTML = ''; // No valid active promotions, hide container
+                }
+
+            } catch (error) {
+                console.error("প্রমোশন ব্যানার লোড করতে সমস্যা:", error);
+                promotionCardContainer.innerHTML = `<p class="text-center text-red-600">প্রমোশন লোড করতে সমস্যা হয়েছে।</p>`;
+            }
+        }
+
+
+        // Initial setup on DOMContentLoaded
+        document.addEventListener('DOMContentLoaded', () => {
+            getHeaderElements(); // Get references to the elements after they are in the DOM
+            setupSignInCardListener();
+            setupMobileMenuListeners();
+            setupNotificationDropdownListeners();
+            loadUserDataFromFirebase();
+            loadAllNotificationsForUI();
+            loadPromotionBanner(); // Load the promotion banner
+            loadTasks(); // Load the initial batch of tasks
+            loadOrders();
+        });
+    </script>
+</body>
+</html>
+
