@@ -327,7 +327,6 @@
 </head>
 <body class="bg-gradient-to-b from-cyan-100 to-blue-200 min-h-screen flex flex-col">
 
-    <!-- Header Section (from header.html) -->
     <header class="bg-white shadow-xl sticky top-0 z-50 border-b border-gray-200">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 flex items-center justify-between">
             <div class="flex items-center space-x-3 sm:space-x-4">
@@ -430,17 +429,13 @@
         <div id="sliderBackdrop" class="hidden" tabindex="-1" aria-hidden="true"></div>
     </header>
 
-    <!-- Promotion Card Container -->
     <div id="promotionCardContainer" class="max-w-3xl mx-auto px-6 py-6 w-full">
-        <!-- Promotion card will be loaded here by JavaScript -->
-    </div>
+        </div>
 
     <main class="flex-grow max-w-3xl mx-auto px-6 py-12 w-full mt-[1px]">
         <h2 class="text-3xl font-extrabold text-blue-800 mb-8 text-center">আপনার টাস্কসমূহ</h2>
         <div id="task-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            <!-- Tasks will be loaded here by JavaScript -->
-        </div>
-        <!-- NEW: Load More button container -->
+            </div>
         <div id="pagination-buttons" class="flex justify-center items-center space-x-4 mt-8">
             <button id="prev-page-btn" class="bg-blue-600 text-white font-semibold p-3 rounded-full transition-colors hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed">
                 <i class="fas fa-chevron-left"></i>
@@ -455,8 +450,7 @@
 
         <h2 class="text-3xl font-extrabold text-blue-800 mb-8 text-center mt-12">আপনার জমা করা অর্ডারসমূহ</h2>
         <div id="orders-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            <!-- Orders will be loaded here by JavaScript -->
-        </div>
+            </div>
     </main>
 
     <footer class="bg-blue-700 text-white py-6 mt-12">
@@ -469,26 +463,56 @@
         import { getDatabase, ref, get, child, query, limitToFirst, startAfter, endBefore, orderByKey } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-database.js";
         import { getAuth, onAuthStateChanged, signOut, signInAnonymously } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-auth.js";
 
-        // Firebase Configuration (from header.html)
-        const firebaseConfig = {
-            apiKey: "AIzaSyAC4h55aA0Zz--V5ejyndzR5WC_-9rAPio",
-            authDomain: "subscribe-bot-6f9b2.firebaseapp.com",
-            databaseURL: "https://subscribe-bot-6f9b2-default-rtdb.firebaseio.com",
-            projectId: "subscribe-bot-6f9b2",
-            storageBucket: "subscribe-bot-6f9b2.firebasestorage.app",
-            messagingSenderId: "141787931031",
-            appId: "1:141787931031:web:2108a3e930f5ce4fbc64d2",
-            measurementId: "G-HSDKCJB14Y"
-        };
+        // Function to load config from Vercel environment variables
+        async function getFirebaseConfig() {
+            try {
+                const response = await fetch('/api/firebase-config');
+                if (!response.ok) {
+                    throw new Error('Failed to fetch Firebase config from Vercel API.');
+                }
+                return await response.json();
+            } catch (error) {
+                console.error("Error fetching Firebase config:", error);
+                // Fallback to a hardcoded config if needed (not recommended for production)
+                // return { ... };
+                // For production, the best practice is to handle the error, perhaps by showing an alert to the user.
+            }
+        }
 
-        // Initialize Firebase
-        const app = initializeApp(firebaseConfig);
-        const db = getDatabase(app);
-        const auth = getAuth(app);
+        let app, db, auth;
 
-        // Make db and auth globally accessible for convenience if other scripts were relying on window.db/window.auth
-        window.db = db;
-        window.auth = auth;
+        // Initialize Firebase after fetching the config
+        async function initializeFirebase() {
+            try {
+                const firebaseConfig = await getFirebaseConfig();
+                if (!firebaseConfig) {
+                    console.error("Firebase initialization aborted. Configuration not found.");
+                    return;
+                }
+                app = initializeApp(firebaseConfig);
+                db = getDatabase(app);
+                auth = getAuth(app);
+                console.log("Firebase initialized successfully with config from Vercel.");
+                
+                // Make db and auth globally accessible
+                window.db = db;
+                window.auth = auth;
+
+                // Run initial data loading functions after initialization
+                getHeaderElements();
+                setupSignInCardListener();
+                setupMobileMenuListeners();
+                setupNotificationDropdownListeners();
+                loadUserDataFromFirebase();
+                loadAllNotificationsForUI();
+                loadPromotionBanner();
+                loadTasks();
+                loadOrders();
+
+            } catch (error) {
+                console.error("Firebase initialization failed:", error);
+            }
+        }
 
         // Utility function for escaping HTML
         function esc(str = "") {
@@ -629,7 +653,7 @@
                     if (sliderProfilePic) sliderProfilePic.src = DEFAULT_PROFILE_PIC_URL;
                     if (userPointsDisplay) userPointsDisplay.textContent = `লগইন করুন`;
                     if (userPointsCard) userPointsCard.classList.add('hidden');
-                    if (signInStatusCard) signInPointsCard.classList.remove('hidden');
+                    if (signInStatusCard) signInStatusCard.classList.remove('hidden');
                     if (loadingStatusCard) loadingStatusCard.classList.add('hidden');
                     if (welcomeMessage) welcomeMessage.textContent = `স্বাগতম, অতিথি`; // Changed to match dashboard's initial text
                     if (sliderUserName) sliderUserName.textContent = `স্বাগতম, অতিথি`; // Changed to match dashboard's initial text
@@ -1221,7 +1245,6 @@
                                     <img src="${esc(latestPromotion.imageUrl)}" alt="প্রমোশন ব্যানার ছবি"/>
                                 </div>
                             </a>
-                            <!-- Sponsored Tag -->
                             <div class="sponsored-tag">Sponsored</div>
                         </div>
                     `;
@@ -1238,17 +1261,8 @@
 
         // Initial setup on DOMContentLoaded
         document.addEventListener('DOMContentLoaded', () => {
-            getHeaderElements(); // Get references to the elements after they are in the DOM
-            setupSignInCardListener();
-            setupMobileMenuListeners();
-            setupNotificationDropdownListeners();
-            loadUserDataFromFirebase();
-            loadAllNotificationsForUI();
-            loadPromotionBanner(); // Load the promotion banner
-            loadTasks(); // Load the initial batch of tasks
-            loadOrders();
+            initializeFirebase();
         });
     </script>
 </body>
 </html>
-
